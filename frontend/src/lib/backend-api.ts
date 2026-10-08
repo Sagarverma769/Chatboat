@@ -1,17 +1,12 @@
 export function getBackendApiUrl(path: string) {
   const configuredBase = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
-  const base = configuredBase || (process.env.NODE_ENV === "development" ? "http://localhost:8000/api/v1" : "");
-  if (!base) {
-    return null;
-  }
+  // Always default to 127.0.0.1:8000/api/v1 so it works even without .env.local on VMs
+  const base = configuredBase || "http://127.0.0.1:8000/api/v1";
   return `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }
 
 export async function backendRequest(request: Request, path: string, payload?: unknown): Promise<Response> {
   const url = getBackendApiUrl(path);
-  if (!url) {
-    return Response.json({ detail: "Backend API URL is not configured." }, { status: 503 });
-  }
 
   const headers = new Headers({ Accept: "application/json" });
   const authorization = request.headers.get("authorization");
@@ -27,21 +22,38 @@ export async function backendRequest(request: Request, path: string, payload?: u
     if (contentType) headers.set("Content-Type", contentType);
   }
 
-  try {
-    const upstream = await fetch(url, {
-      method: request.method,
-      headers,
-      body,
-      cache: "no-store",
-    });
-    const responseBody = upstream.status === 204 ? null : await upstream.text();
-    return new Response(responseBody, {
-      status: upstream.status,
-      headers: {
-        "Content-Type": upstream.headers.get("content-type") || "application/json",
-      },
-    });
-  } catch {
-    return Response.json({ detail: "Backend API is unavailable." }, { status: 503 });
+  // Try primary URL first, with fallback to alternate loopback (127.0.0.1 <-> localhost)
+  const candidateUrls = [url];
+  if (url.includes("127.0.0.1")) {
+    candidateUrls.push(url.replace("127.0.0.1", "localhost"));
+  } else if (url.includes("localhost")) {
+    candidateUrls.push(url.replace("localhost", "127.0.0.1"));
   }
+
+  let lastError: unknown = null;
+  for (const targetUrl of candidateUrls) {
+    try {
+      const upstream = await fetch(targetUrl, {
+        method: request.method,
+        headers,
+        body,
+        cache: "no-store",
+      });
+      const responseBody = upstream.status === 204 ? null : await upstream.text();
+      return new Response(responseBody, {
+        status: upstream.status,
+        headers: {
+          "Content-Type": upstream.headers.get("content-type") || "application/json",
+        },
+      });
+    } catch (err) {
+      lastError = err;
+      // Continue to next candidate URL
+    }
+  }
+
+  console.error(`[backend-api] Failed to connect to backend at ${candidateUrls.join(" or ")}:`, lastError);
+  return Response.json({
+    detail: "Backend API server is not running or unreachable on port 8000. Please start the Python backend (uvicorn main:app --host 0.0.0.0 --port 8000)."
+  }, { status: 503 });
 }

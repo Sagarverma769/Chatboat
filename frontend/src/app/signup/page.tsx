@@ -77,17 +77,14 @@ export default function SignUpPage() {
         setSuccessMsg('Account created successfully! Redirecting to login...');
         setTimeout(() => {
           router.push('/login');
-        }, 1200);
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 300);
+        }, 1000);
         return;
       }
 
-      if (!response.ok) {
-        setErrorMsg(data?.detail || data?.error || 'Registration failed. Please check your details and try again.');
-        return;
-      }
-
-      setSuccessMsg('Account created successfully. Redirecting to login...');
-      setTimeout(() => router.push('/login'), 1200);
+      setErrorMsg(data?.detail || data?.error || 'Registration failed. Please check your details and try again.');
     } catch {
       setErrorMsg('Unable to reach the account server. Check the API connection and try again.');
     } finally {

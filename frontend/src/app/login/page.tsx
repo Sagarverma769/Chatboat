@@ -98,7 +98,10 @@ export default function LoginPage() {
         localStorage.setItem('userName', userName);
 
         setSuccessMsg('Admin Authentication Successful! Redirecting...');
-        setTimeout(() => router.push('/admin'), 1000);
+        setTimeout(() => {
+          router.push('/admin');
+          setTimeout(() => { window.location.href = '/admin'; }, 300);
+        }, 1000);
       } else {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('userEmail', cleanEmail);
@@ -106,7 +109,10 @@ export default function LoginPage() {
         localStorage.setItem('userName', userName);
 
         setSuccessMsg('Login Successful! Redirecting to User Portal...');
-        setTimeout(() => router.push('/user'), 1000);
+        setTimeout(() => {
+          router.push('/user');
+          setTimeout(() => { window.location.href = '/user'; }, 300);
+        }, 1000);
       }
     } catch (err) {
       setErrorMsg('Unable to reach the security server. Check the API connection and try again.');
