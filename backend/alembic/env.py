@@ -5,7 +5,7 @@ from sqlalchemy.engine import Connection
 
 from alembic import context
 
-from core.config import settings
+from core.config import get_sync_database_uri
 from db.base import Base  # imports all SQLAlchemy models
 
 config = context.config
@@ -13,19 +13,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Extract database URL from Pydantic settings
-db_url = (
-    getattr(settings, "SQLALCHEMY_DATABASE_URI", None)
-    or getattr(settings, "DATABASE_URL", None)
-    or getattr(settings, "ASYNC_DATABASE_URI", None)
-)
-if not db_url:
-    # Construct fallback from settings if individually defined
-    db_url = f"sqlite:///./sql_app.db"
-
-# Ensure sync protocol for standard Alembic engine execution if using sqlite/asyncpg
-db_url_str = str(db_url).replace("+aiosqlite", "").replace("+asyncpg", "")
-config.set_main_option("sqlalchemy.url", db_url_str)
+config.set_main_option("sqlalchemy.url", get_sync_database_uri())
 
 target_metadata = Base.metadata
 

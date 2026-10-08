@@ -1,21 +1,22 @@
 from contextlib import asynccontextmanager
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from core.config import settings
+from core.config import settings, validate_production_settings
 from db.session import engine
 from db.base import Base
 from api.v1.api import api_router
-from api.v1.endpoints.auth import router as auth_router
-from api.v1.endpoints.tickets import router as tickets_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure database schema is initialized on startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    validate_production_settings()
+    is_production = settings.ENVIRONMENT.lower() in {"production", "prod"} or os.getenv("VERCEL") == "1"
+    if not is_production:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     yield
 
 
@@ -34,14 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Primary API Router
+# Primary API Router (includes auth, users, and tickets)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # Direct root-level /auth router for backward compatibility
+from api.v1.endpoints.auth import router as auth_router
 app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 
-# Support Tickets Router
-app.include_router(tickets_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

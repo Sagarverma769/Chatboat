@@ -104,3 +104,19 @@ async def test_update_user_admin_access_requires_admin(async_client: AsyncClient
         headers=headers,
     )
     assert response.status_code == 403
+
+@pytest.mark.asyncio
+async def test_delete_user_requires_admin_and_prevents_self_delete(async_client: AsyncClient, normal_user, superuser):
+    user_token = create_access_token(normal_user.id)
+    admin_token = create_access_token(superuser.id)
+    user_headers = {"Authorization": f"Bearer {user_token}"}
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+
+    denied = await async_client.delete(f"{settings.API_V1_STR}/users/{normal_user.id}", headers=user_headers)
+    assert denied.status_code == 403
+
+    self_delete = await async_client.delete(f"{settings.API_V1_STR}/users/{superuser.id}", headers=admin_headers)
+    assert self_delete.status_code == 400
+
+    deleted = await async_client.delete(f"{settings.API_V1_STR}/users/{normal_user.id}", headers=admin_headers)
+    assert deleted.status_code == 204

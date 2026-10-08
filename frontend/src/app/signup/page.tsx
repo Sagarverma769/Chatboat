@@ -61,7 +61,7 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+      const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,22 +73,24 @@ export default function SignUpPage() {
 
       const data = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        const detail = data?.detail || 'Registration failed. Please check your email address and try again.';
-        setErrorMsg(detail);
-        setIsLoading(false);
+      if (response.ok) {
+        setSuccessMsg('Account created successfully! Redirecting to login...');
+        setTimeout(() => {
+          router.push('/login');
+        }, 1200);
         return;
       }
 
-      setSuccessMsg('Account created successfully! Redirecting to login...');
-      
-      // Direct redirect to /login
-      setTimeout(() => {
-        router.push('/login');
-      }, 1200);
+      if (!response.ok) {
+        setErrorMsg(data?.detail || data?.error || 'Registration failed. Please check your details and try again.');
+        return;
+      }
 
-    } catch (err) {
-      setErrorMsg('Unable to connect to security server. Please ensure the backend is running.');
+      setSuccessMsg('Account created successfully. Redirecting to login...');
+      setTimeout(() => router.push('/login'), 1200);
+    } catch {
+      setErrorMsg('Unable to reach the account server. Check the API connection and try again.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -125,13 +127,15 @@ export default function SignUpPage() {
           </div>
         )}
 
-        <form onSubmit={handleSignUp} className="space-y-4 mt-6">
+        <form onSubmit={handleSignUp} autoComplete="off" className="space-y-4 mt-6">
           <div>
             <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">FULL NAME</label>
             <div className="relative">
               <input
                 type="text"
                 required
+                name="full_name_field"
+                autoComplete="off"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
@@ -148,6 +152,9 @@ export default function SignUpPage() {
               <input
                 type="email"
                 required
+                name="user_signup_email"
+                autoComplete="off"
+                aria-autocomplete="none"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
@@ -164,6 +171,8 @@ export default function SignUpPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                name="user_signup_password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 pr-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
@@ -191,6 +200,8 @@ export default function SignUpPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                name="user_signup_confirm_password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"

@@ -8,8 +8,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
     }
 
-    return NextResponse.json({ message: 'Password reset instructions sent to your email.' });
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { detail: 'Password reset email delivery is not configured. Contact your administrator.' },
+      { status: 503 },
+    );
+  } catch {
+    return NextResponse.json({ detail: 'Password reset request could not be processed.' }, { status: 400 });
   }
 }

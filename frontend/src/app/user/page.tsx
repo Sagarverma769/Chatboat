@@ -11,18 +11,52 @@ export default function UserPortalPage() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem("userEmail") || localStorage.getItem("email") || "";
-    const storedName = localStorage.getItem("userName") || localStorage.getItem("name") || "";
+    let active = true;
+    const verifyUserSession = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
 
-    setUserEmail(storedEmail);
-    setUserName(storedName);
-    setIsAuthorized(true);
+      try {
+        const response = await fetch("/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const user = await response.json();
+        if (!response.ok) {
+          localStorage.removeItem("access_token");
+          if (active) setIsAuthorized(false);
+          router.replace("/login");
+          return;
+        }
+
+        if (active) {
+          const verifiedEmail = user.email || "";
+          const verifiedName = user.full_name || verifiedEmail.split("@")[0];
+          localStorage.setItem("userEmail", verifiedEmail);
+          localStorage.setItem("userName", verifiedName);
+          setUserEmail(verifiedEmail);
+          setUserName(verifiedName);
+          setIsEmailVerified(Boolean(user.is_verified));
+          setIsAuthorized(true);
+        }
+      } catch {
+        localStorage.removeItem("access_token");
+        if (active) setIsAuthorized(false);
+        router.replace("/login");
+      }
+    };
+
+    void verifyUserSession();
 
     const handleMouseMove = (e: MouseEvent) => setMousePos({ x: e.clientX, y: e.clientY });
     const handleClickOutside = (e: MouseEvent) => {
@@ -34,13 +68,17 @@ export default function UserPortalPage() {
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
+      active = false;
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const handleSignOut = () => {
-    localStorage.clear();
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userRole");
     router.push("/login");
   };
 
@@ -51,7 +89,7 @@ export default function UserPortalPage() {
     day: "numeric",
   });
 
-  if (isAuthorized === null) {
+  if (isAuthorized !== true) {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center font-sans">
         <div className="text-cyan-400 text-sm font-bold animate-pulse flex items-center gap-2">
@@ -156,10 +194,6 @@ export default function UserPortalPage() {
               <div className="flex items-center gap-2 text-xs font-extrabold text-cyan-300/90 mt-2">
                 <Calendar className="w-3.5 h-3.5 text-cyan-400" />
                 <span>{currentDate}</span>
-                <span className="text-slate-600">•</span>
-                <span className="text-slate-300 font-bold">
-                  Your account is verified with Level-1 Enterprise Security clearance.
-                </span>
               </div>
             </div>
 

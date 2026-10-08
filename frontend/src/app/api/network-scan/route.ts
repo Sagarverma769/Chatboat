@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import { isIP, isIPv4 } from 'node:net';
+import { getBackendApiUrl } from '@/lib/backend-api';
 
 const execAsync = promisify(exec);
 
@@ -37,7 +38,7 @@ function isValidPortList(ports: string): boolean {
 async function resolveHostName(ip: string): Promise<string | null> {
   if (process.platform === 'win32') {
     try {
-      const { stdout: nbtOut } = await execAsync(`nbtstat -A ${ip}`, { timeout: 1200 });
+      const { stdout: nbtOut } = await execAsync(`nbtstat -A ${ip}`, { timeout: 10000 });
       const nbtMatch = nbtOut.match(/([A-Za-z0-9_-]+)\s+<00>\s+UNIQUE/i);
       if (nbtMatch && nbtMatch[1]) return nbtMatch[1].trim();
     } catch {}
@@ -72,29 +73,51 @@ async function resolveMacAddress(ip: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
   try {
-    const authorization = req.headers.get('authorization');
-    if (!authorization?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'Admin sign-in is required to run a scan.' }, { status: 401 });
+    const realScanEnabled = process.env.NEXT_PUBLIC_ENABLE_REAL_SCAN === 'true';
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (process.env.VERCEL === '1') {
+      return NextResponse.json({
+        success: false,
+        error: 'Vercel cannot scan private LAN devices or run a scanner inside your network. Deploy an authenticated scanner agent on the target network and connect this app to it.',
+      }, { status: 503 });
     }
 
-    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
-    let user: { is_superuser?: boolean; email?: string };
-    try {
-      const userResponse = await fetch(`${apiUrl}/users/me`, {
-        headers: { Authorization: authorization },
-        cache: 'no-store',
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!userResponse.ok) {
-        return NextResponse.json({ success: false, error: 'Please sign in again to run a scan.' }, { status: 401 });
+    if (isProduction && !realScanEnabled) {
+      return NextResponse.json({
+        success: false,
+        error: 'Live scanning is disabled in production. Configure an authorized Nmap scanner before enabling this feature.',
+      }, { status: 503 });
+    }
+
+    if (isProduction) {
+      const authorization = req.headers.get('authorization');
+      if (!authorization?.startsWith('Bearer ')) {
+        return NextResponse.json({ success: false, error: 'Admin sign-in is required to run a scan.' }, { status: 401 });
       }
-      user = await userResponse.json();
-    } catch {
-      return NextResponse.json({ success: false, error: 'Authentication service is unavailable.' }, { status: 503 });
-    }
 
-    if (!user.is_superuser) {
-      return NextResponse.json({ success: false, error: 'Admin access is required to run a scan.' }, { status: 403 });
+      const currentUserUrl = getBackendApiUrl('/users/me');
+      if (!currentUserUrl) {
+        return NextResponse.json({ success: false, error: 'Backend API URL is not configured.' }, { status: 503 });
+      }
+      let user: { is_superuser?: boolean; email?: string };
+      try {
+        const userResponse = await fetch(currentUserUrl, {
+          headers: { Authorization: authorization },
+          cache: 'no-store',
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!userResponse.ok) {
+          return NextResponse.json({ success: false, error: 'Please sign in again to run a scan.' }, { status: 401 });
+        }
+        user = await userResponse.json();
+      } catch {
+        return NextResponse.json({ success: false, error: 'Authentication service is unavailable.' }, { status: 503 });
+      }
+
+      if (!user.is_superuser) {
+        return NextResponse.json({ success: false, error: 'Admin access is required to run a scan.' }, { status: 403 });
+      }
     }
 
     const body = await req.json();
@@ -116,6 +139,16 @@ export async function POST(req: NextRequest) {
     const portSelection = body.portSelection;
     const timing = ['-T2', '-T3', '-T4', '-T5'].includes(body.timing) ? body.timing : '-T4';
     const customPorts = typeof body.customPorts === 'string' ? body.customPorts.trim() : '';
+    const detailedScan = body.serviceVersion === true
+      || body.osDetection === true
+      || body.defaultScripts === true
+      || scanType === '-A'
+      || scanType === '-sU'
+      || scanType === 'aggressive'
+      || scanType === 'udp';
+    const hostTimeout = portSelection === 'all' || scanType === 'all_ports'
+      ? '300s'
+      : detailedScan ? '18s' : '9s';
 
     if (isUiScan) {
       args = [scanType];
@@ -138,8 +171,7 @@ export async function POST(req: NextRequest) {
         }
         if (body.noPing === true) args.push('-Pn');
       }
-      // Speed optimizations: guarantee execution finishes in under 10 seconds
-      args.push(timing, '-n', '--max-retries', '1', '--min-rate', '300', '--host-timeout', '9s', sanitizedTarget);
+      args.push(timing, '-n', '--max-retries', '1', '--min-rate', '300', '--host-timeout', hostTimeout, sanitizedTarget);
     } else switch (scanType) {
       case 'ping':
         args = ['-sn', '-T4', sanitizedTarget];
@@ -175,13 +207,6 @@ export async function POST(req: NextRequest) {
 
     let stdoutData = '';
     let stderrData = '';
-    const detailedScan = body.serviceVersion === true
-      || body.osDetection === true
-      || body.defaultScripts === true
-      || scanType === '-A'
-      || scanType === '-sU'
-      || scanType === 'aggressive'
-      || scanType === 'udp';
     const scanTimeoutMs = portSelection === 'all' || scanType === 'all_ports'
       ? 300000
       : detailedScan ? 90000 : 30000;
@@ -326,8 +351,18 @@ export async function POST(req: NextRequest) {
     const osClassMatch = stdout.match(/Running:\s*([^\n]+)/i);
     const serviceOsMatch = stdout.match(/Service Info:[^\n]*?\bOS:\s*([^\n;]+)/i);
     const osCpeMatch = stdout.match(/OS CPE:\s*([^\n]+)/i);
+    const topOsGuess = osGuessesMatch?.[1].match(/^(.+?\(\d+%\))/)?.[1]
+      || osGuessesMatch?.[1].split(',')[0].trim();
 
-    const rawOs = osMatch?.[1] || osGuessesMatch?.[1] || serviceOsMatch?.[1] || osClassMatch?.[1] || osCpeMatch?.[1] || '';
+    const rawOs = osMatch?.[1]
+      ? `Nmap OS match: ${osMatch[1]}`
+      : topOsGuess
+        ? `${topOsGuess} - Nmap estimate`
+        : serviceOsMatch?.[1]
+          ? `Service fingerprint: ${serviceOsMatch[1]}`
+          : osClassMatch?.[1]
+            ? `Nmap OS class: ${osClassMatch[1]}`
+            : osCpeMatch?.[1] || '';
 
     if (rawOs) {
       osDetails = rawOs.trim();

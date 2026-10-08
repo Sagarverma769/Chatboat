@@ -33,7 +33,7 @@ async def register_user(
         full_name=user_in.full_name,
         is_active=user_in.is_active,
         is_superuser=False,
-        is_verified=user_in.is_verified,
+        is_verified=True,
     )
     db.add(db_user)
     await db.commit()

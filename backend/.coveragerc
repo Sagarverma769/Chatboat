@@ -1,5 +1,0 @@
-[run]
-omit =
-    initial_data.py
-    reset_db_pass.py
-    tests/*

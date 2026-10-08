@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const handleResetPassword = (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
@@ -33,24 +33,24 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-
-      // Check if email exists in localStorage registry or is admin
-      const usersRegistry = JSON.parse(localStorage.getItem('usersRegistry') || '[]');
-      const emailExists = usersRegistry.some(
-        (u: any) => u.email.trim().toLowerCase() === cleanEmail
-      );
-
-      const isAdmin = cleanEmail === 'admin@indsphinx.com';
-
-      if (!emailExists && !isAdmin) {
-        setErrorMsg('Email not registered. Please check the address or sign up.');
+    setLoading(true);
+    try {
+      const response = await fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setErrorMsg(data.detail || 'Password reset is unavailable. Contact your administrator.');
         return;
       }
-
-      setSuccessMsg('Password reset link sent successfully! Please check your email inbox.');
-    }, 600);
+      setSuccessMsg(data.message || 'Password reset instructions were requested.');
+    } catch {
+      setErrorMsg('Unable to reach the account service. Try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

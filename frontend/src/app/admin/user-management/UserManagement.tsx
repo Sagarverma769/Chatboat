@@ -39,96 +39,56 @@ export default function UserManagement() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  const fetchUsers = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const token = localStorage.getItem("access_token");
       const currentEmail = (
-        typeof window !== "undefined" 
-          ? (localStorage.getItem("userEmail") || localStorage.getItem("email") || "") 
+        typeof window !== "undefined"
+          ? (localStorage.getItem("userEmail") || localStorage.getItem("email") || "")
           : ""
       ).toLowerCase();
-
-      // Attempt fetch from backend
-      const response = await fetch("http://127.0.0.1:8000/api/v1/users/", {
+      const response = await fetch("/api/users", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }).catch(() => null);
-
-      if (response && response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setUsers(
-            data.map((u: any) => ({
-              id: String(u.id),
-              name: u.full_name || u.email.split("@")[0],
-              email: u.email,
-              joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : "Active",
-              isAdmin: Boolean(u.is_superuser),
-              isProtected: u.email.toLowerCase() === currentEmail || u.email.toLowerCase() === "sagar@gmail.com",
-            }))
-          );
-          return;
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Failed to load registered users.");
+      const nextUsers = (Array.isArray(data) ? data : []).map((user: User) => ({
+        ...user,
+        isProtected: Boolean(user.isProtected) || user.email.toLowerCase() === currentEmail,
+      }));
+      setUsers((prev) => {
+        if (
+          prev.length === nextUsers.length &&
+          prev.every(
+            (u, i) =>
+              u.id === nextUsers[i]?.id &&
+              u.isAdmin === nextUsers[i]?.isAdmin &&
+              u.email === nextUsers[i]?.email
+          )
+        ) {
+          return prev;
         }
-      }
-
-      // Next API route fallback
-      const fallbackRes = await fetch("/api/users").catch(() => null);
-      if (fallbackRes && fallbackRes.ok) {
-        const fbData = await fallbackRes.json();
-        if (Array.isArray(fbData)) {
-          setUsers(
-            fbData.map((u: any) => ({
-              id: String(u.id || Math.random()),
-              name: u.full_name || u.name || u.email.split("@")[0],
-              email: u.email,
-              joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : u.joined || "Active",
-              isAdmin: Boolean(u.is_superuser ?? u.isAdmin),
-              isProtected: u.email.toLowerCase() === currentEmail,
-            }))
-          );
-          return;
-        }
-      }
-
-      // Default mock fallback if no database connection yet
-      setUsers([
-        {
-          id: "1",
-          name: "Sagar Verma",
-          email: "sagar@gmail.com",
-          joined: "9/26/2026",
-          isAdmin: true,
-          isProtected: true,
-        },
-        {
-          id: "2",
-          name: "IT Admin User",
-          email: "user@gmail.com",
-          joined: "9/29/2026",
-          isAdmin: true,
-          isProtected: currentEmail === "user@gmail.com",
-        },
-        {
-          id: "3",
-          name: "Operator User 1",
-          email: "user1@gmail.com",
-          joined: "9/29/2026",
-          isAdmin: false,
-          isProtected: false,
-        },
-      ]);
+        return nextUsers;
+      });
+      setLoadError(null);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching backend users:", error);
+      setLoadError(error instanceof Error ? error.message : "Account service is unavailable.");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    void fetchUsers(true);
+    const intervalId = window.setInterval(() => void fetchUsers(), 10000);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   const triggerToast = (msg: string) => {
@@ -141,29 +101,28 @@ export default function UserManagement() {
     setUpdatingId(id);
     const newStatus = !currentStatus;
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-      await fetch(`http://127.0.0.1:8000/api/v1/users/${id}`, {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("/api/users", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ is_superuser: newStatus }),
-      }).catch(() => null);
-
+        body: JSON.stringify({ id, isAdmin: newStatus }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Unable to update account permissions.");
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, isAdmin: newStatus } : u))
       );
 
       triggerToast(
-        newStatus 
-          ? `Granted Admin Access to ${userEmail}` 
+        newStatus
+          ? `Granted Admin Access to ${userEmail}`
           : `Revoked Admin Access for ${userEmail}`
       );
-    } catch {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, isAdmin: newStatus } : u))
-      );
+    } catch (error) {
+      triggerToast(error instanceof Error ? error.message : "Unable to update account permissions.");
     } finally {
       setUpdatingId(null);
     }
@@ -174,14 +133,17 @@ export default function UserManagement() {
     if (!userToDelete) return;
     const targetEmail = userToDelete.email;
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-      await fetch(`http://127.0.0.1:8000/api/v1/users/${userToDelete.id}`, {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(`/api/users?id=${encodeURIComponent(userToDelete.id)}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }).catch(() => null);
-
+      });
+      const data = response.status === 204 ? null : await response.json();
+      if (!response.ok) throw new Error(data?.detail || "Unable to delete this account.");
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
       triggerToast(`Account ${targetEmail} removed from system.`);
+    } catch (error) {
+      triggerToast(error instanceof Error ? error.message : "Unable to delete this account.");
     } finally {
       setUserToDelete(null);
     }
@@ -255,7 +217,7 @@ export default function UserManagement() {
           {/* Refresh Button */}
           <button
             type="button"
-            onClick={fetchUsers}
+            onClick={() => void fetchUsers(true)}
             className="px-4 py-2.5 rounded-xl bg-slate-950 border border-cyan-500/40 text-cyan-300 font-extrabold text-xs flex items-center gap-2 hover:bg-cyan-500/10 transition-all cursor-pointer shadow-sm active:scale-95"
           >
             <RotateCw className={`w-4 h-4 text-cyan-400 ${loading ? "animate-spin" : ""}`} />
@@ -464,7 +426,7 @@ export default function UserManagement() {
               ) : (
                 <tr>
                   <td colSpan={5} className="py-10 text-center text-slate-500 font-extrabold">
-                    No accounts match the current search or filter criteria.
+                    {loadError ? `Registered accounts could not be loaded: ${loadError}` : "No accounts match the current search or filter criteria."}
                   </td>
                 </tr>
               )}

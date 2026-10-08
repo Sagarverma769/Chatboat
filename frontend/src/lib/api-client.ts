@@ -1,6 +1,15 @@
-﻿import axios from 'axios';
+/**
+ * api-client.ts
+ *
+ * NOTE: This Axios client is retained for reference but is NOT actively used.
+ * All backend API calls go through Next.js API routes using backendRequest()
+ * from @/lib/backend-api.ts (server-side) to avoid CORS issues.
+ *
+ * Use this only if you need to call external APIs directly from the browser.
+ */
+import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = '/api';
 
 export const apiClient = axios.create({
   baseURL: API_URL,

@@ -26,6 +26,7 @@ export default function AdminPortalPage() {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [pendingQueriesCount, setPendingQueriesCount] = useState(0);
 
   // Tab State: "dashboard" | "scanning" | "users" | "queries"
   const [activeTab, setActiveTab] = useState<"dashboard" | "scanning" | "users" | "queries">("dashboard");
@@ -34,14 +35,44 @@ export default function AdminPortalPage() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedEmail =
-      localStorage.getItem("userEmail") || localStorage.getItem("email") || "";
-    const storedName =
-      localStorage.getItem("userName") || localStorage.getItem("name") || "";
+    let active = true;
+    const verifyAdminSession = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
 
-    setUserEmail(storedEmail);
-    setUserName(storedName);
-    setIsAuthorized(true);
+      try {
+        const response = await fetch("/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const user = await response.json();
+        if (!response.ok || !user.is_superuser) {
+          localStorage.removeItem("access_token");
+          if (active) setIsAuthorized(false);
+          router.replace(response.ok ? "/user" : "/login");
+          return;
+        }
+
+        if (active) {
+          const verifiedEmail = user.email || "";
+          const verifiedName = user.full_name || verifiedEmail.split("@")[0];
+          localStorage.setItem("userEmail", verifiedEmail);
+          localStorage.setItem("userName", verifiedName);
+          setUserEmail(verifiedEmail);
+          setUserName(verifiedName);
+          setIsAuthorized(true);
+        }
+      } catch {
+        localStorage.removeItem("access_token");
+        if (active) setIsAuthorized(false);
+        router.replace("/login");
+      }
+    };
+
+    void verifyAdminSession();
 
     const handleMouseMove = (e: MouseEvent) =>
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -54,17 +85,46 @@ export default function AdminPortalPage() {
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
+      active = false;
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  // Live poll pending queries count every 8 seconds
+  useEffect(() => {
+    if (!isAuthorized) return;
+    const fetchPendingCount = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+        const res = await fetch("/api/tickets?admin=true", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const tickets = Array.isArray(data.tickets) ? data.tickets : [];
+        const pending = tickets.filter((t: { status: string }) => t.status === "Pending").length;
+        setPendingQueriesCount((prev) => (prev !== pending ? pending : prev));
+      } catch {
+        // silently ignore polling errors
+      }
+    };
+    void fetchPendingCount();
+    const pollInterval = window.setInterval(() => void fetchPendingCount(), 12000);
+    return () => window.clearInterval(pollInterval);
+  }, [isAuthorized]);
+
   const handleSignOut = () => {
-    localStorage.clear();
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userRole");
     router.push("/login");
   };
 
-  if (isAuthorized === null) {
+  if (isAuthorized !== true) {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center font-sans">
         <div className="text-cyan-400 text-sm font-bold animate-pulse flex items-center gap-2">
@@ -204,7 +264,7 @@ export default function AdminPortalPage() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("queries")}
+              onClick={() => { setActiveTab("queries"); setPendingQueriesCount(0); }}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === "queries"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
@@ -215,9 +275,15 @@ export default function AdminPortalPage() {
                 <Inbox size={18} />
                 <span>IT Helpdesk & Queries</span>
               </div>
-              <span className="text-[9px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-400/50 text-cyan-300 font-mono">
-                LIVE
-              </span>
+              {pendingQueriesCount > 0 ? (
+                <span className="text-[9px] px-2 py-0.5 rounded bg-rose-500/30 border border-rose-400 text-rose-200 font-mono font-black animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+                  {pendingQueriesCount} NEW
+                </span>
+              ) : (
+                <span className="text-[9px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-400/50 text-cyan-300 font-mono">
+                  LIVE
+                </span>
+              )}
             </button>
           </nav>
         </aside>

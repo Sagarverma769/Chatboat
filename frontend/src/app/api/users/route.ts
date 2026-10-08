@@ -1,37 +1,51 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { backendRequest } from "@/lib/backend-api";
 
-export async function GET() {
+type BackendUser = {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  created_at?: string | null;
+  is_superuser: boolean;
+};
+
+function mapUser(user: BackendUser) {
+  return {
+    id: user.id,
+    name: user.full_name || user.email.split("@")[0],
+    email: user.email,
+    joined: user.created_at?.slice(0, 10) || "Unknown",
+    isAdmin: user.is_superuser,
+    isProtected: false,
+  };
+}
+
+export async function GET(req: NextRequest) {
+  const response = await backendRequest(req, "/users/?skip=0&limit=100");
+  if (!response.ok) return response;
+
   try {
-    const res = await fetch("http://127.0.0.1:8000/api/v1/users", {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      return NextResponse.json({ error: "Failed to fetch users" }, { status: res.status });
-    }
-
-    const data = await res.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: "Backend server not reachable" }, { status: 500 });
+    const users = await response.json() as BackendUser[];
+    return NextResponse.json(users.map(mapUser));
+  } catch {
+    return NextResponse.json({ detail: "The account service returned invalid data." }, { status: 502 });
   }
 }
 
-export async function DELETE(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const url = new URL(req.url);
-    const userId = url.searchParams.get("id");
-
-    const res = await fetch(`http://127.0.0.1:8000/api/v1/users/${userId}`, {
-      method: "DELETE",
-    });
-
-    if (!res.ok) {
-      return NextResponse.json({ error: "Failed to delete user" }, { status: res.status });
+    const { id, isAdmin } = await req.json();
+    if (typeof id !== "string" || typeof isAdmin !== "boolean") {
+      return NextResponse.json({ detail: "User ID and admin status are required." }, { status: 400 });
     }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: "Error contacting backend" }, { status: 500 });
+    return backendRequest(req, `/users/${encodeURIComponent(id)}`, { is_superuser: isAdmin });
+  } catch {
+    return NextResponse.json({ detail: "The user update request is invalid." }, { status: 400 });
   }
+}
+
+export async function DELETE(req: NextRequest) {
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) return NextResponse.json({ detail: "User ID is required." }, { status: 400 });
+  return backendRequest(req, `/users/${encodeURIComponent(id)}`);
 }

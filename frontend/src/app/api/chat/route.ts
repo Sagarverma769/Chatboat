@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendApiUrl } from '@/lib/backend-api';
 import userSupportAnswers from './user-support-answers.json';
 
 type UserSupportRule = {
@@ -89,10 +90,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sign in to use the chatbot.' }, { status: 401 });
     }
 
-    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '');
+    const currentUserUrl = getBackendApiUrl('/users/me');
+    if (!currentUserUrl) {
+      return NextResponse.json({ error: 'Backend API URL is not configured.' }, { status: 503 });
+    }
     let authenticatedUser: { is_superuser?: boolean; email?: string };
     try {
-      const userResponse = await fetch(`${apiUrl}/users/me`, {
+      const userResponse = await fetch(currentUserUrl, {
         headers: { Authorization: authorization },
         cache: 'no-store',
         signal: AbortSignal.timeout(5000),
@@ -197,9 +201,9 @@ export async function POST(req: NextRequest) {
 
     try {
       const models = [...new Set([
-        process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
-        'gemini-3.8-flash',
-        'gemini-3.5-flash',
+        process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-8b',
       ])];
       const attempts = [
         ...models.map((model) => ({ model, useGoogleSearch: needsCurrentInfo })),

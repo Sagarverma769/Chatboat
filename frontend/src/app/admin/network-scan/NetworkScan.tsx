@@ -75,7 +75,7 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
   });
 
   const [scanLogs, setScanLogs] = useState<string[]>([
-    "# Configure an authorized target and run a scan to see real Nmap output.",
+    "# Real Nmap output will appear after the scanner completes.",
   ]);
 
   const portArgs = portSelection === "all"
@@ -107,25 +107,21 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
       ports: [],
     });
     const timeStamp = new Date().toLocaleTimeString();
-    setScanLogs((prev) => [
-      ...prev,
-      `\n--------------------------------------------------`,
+    setScanLogs([
       `[${timeStamp}] EXECUTING COMMAND: ${currentCommand}`,
-      `[+] Running Nmap against authorized target ${target}...`,
+      `[+] Submitting scan request for authorized target ${target}...`,
     ]);
 
     try {
       const token = localStorage.getItem("access_token");
-      if (!token) throw new Error("Admin sign-in is required to run a scan.");
 
       const detailedScan = serviceVersion || osDetection || defaultScripts || scanType === "-A" || scanType === "-sU";
       const timeoutMs = portSelection === "all" ? 300000 : detailedScan ? 90000 : 30000;
+      const headers = new Headers({ "Content-Type": "application/json" });
+      if (token) headers.set("Authorization", `Bearer ${token}`);
       const response = await fetch("/api/network-scan", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           targetIp: target,
           scanType,
@@ -239,7 +235,7 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
               </span>
             </h2>
             <p className="text-xs text-slate-400 font-extrabold mt-0.5">
-              Live Network Discovery, OS Detection & Port Inspection
+              Nmap discovery and port inspection from the configured scanner
             </p>
           </div>
         </div>
@@ -469,7 +465,7 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
             <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 min-w-0 overflow-hidden">
               <Cpu className="w-8 h-8 text-cyan-400 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-extrabold uppercase text-slate-400">OS Detection (-O)</p>
+                <p className="text-[10px] font-extrabold uppercase text-slate-400">OS Estimate (-O)</p>
                 <p className="text-xs font-extrabold text-cyan-300 break-words line-clamp-2" title={scanResults.os}>{scanResults.os}</p>
               </div>
             </div>

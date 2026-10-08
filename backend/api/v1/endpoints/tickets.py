@@ -9,35 +9,55 @@ from app.schemas.ticket import TicketCreate, TicketResponse, TicketStatusUpdate
 
 router = APIRouter(prefix="/tickets", tags=["Support Tickets"])
 
-@router.post("/submit", response_model=TicketResponse)
+@router.post("/submit", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
 async def submit_query(
     ticket_in: TicketCreate,
     current_user = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if not ticket_in.query_text.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Query description cannot be empty."
-        )
-    
+    emp_code = (ticket_in.employee_code or "").strip()
+    emp_name = (ticket_in.employee_name or current_user.full_name or current_user.email.split("@", 1)[0]).strip()
+    title_val = ticket_in.title.strip() if ticket_in.title else (f"Emp: {emp_code}" if emp_code else "Chatbot Query")
+    dev_ip = ticket_in.device_ip if ticket_in.device_ip is not None else (emp_code or None)
+
     new_ticket = SupportTicket(
         user_id=str(getattr(current_user, "id", "")),
-        user_email=getattr(current_user, "email", None),
-        query=ticket_in.query_text,
-        bot_response=ticket_in.bot_response
+        user_email=current_user.email,
+        user_name=emp_name,
+        unit=ticket_in.unit or "General",
+        location=ticket_in.location.strip(),
+        device_ip=dev_ip,
+        assigned_member=ticket_in.assigned_member or "IT Admin",
+        category=ticket_in.category or "Chatbot",
+        priority=ticket_in.priority or "Medium",
+        title=title_val,
+        query=ticket_in.description.strip(),
+        status="Pending",
     )
     db.add(new_ticket)
     await db.commit()
     await db.refresh(new_ticket)
     return new_ticket
 
+
+@router.get("/me", response_model=List[TicketResponse])
+async def get_my_tickets(
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(SupportTicket)
+        .where(SupportTicket.user_id == str(current_user.id))
+        .order_by(SupportTicket.created_at.desc())
+    )
+    return result.scalars().all()
+
 @router.get("/admin/all", response_model=List[TicketResponse])
 async def get_all_tickets(
     current_admin = Depends(get_current_active_superuser),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(SupportTicket))
+    result = await db.execute(select(SupportTicket).order_by(SupportTicket.created_at.desc()))
     return result.scalars().all()
 
 @router.patch("/admin/{ticket_id}/status", response_model=TicketResponse)
@@ -52,8 +72,45 @@ async def update_ticket_status(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     
-    ticket.status = status_update.status
+    update_data = status_update.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="At least one ticket field must be updated.")
+    for field, value in update_data.items():
+        setattr(ticket, field, value)
     await db.commit()
     await db.refresh(ticket)
     return ticket
+
+
+@router.delete("/admin/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_ticket(
+    ticket_id: int,
+    current_admin=Depends(get_current_active_superuser),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(SupportTicket).where(SupportTicket.id == ticket_id))
+    ticket = result.scalars().first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    await db.delete(ticket)
+    await db.commit()
+
+
+@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_my_ticket(
+    ticket_id: int,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(SupportTicket).where(
+            SupportTicket.id == ticket_id,
+            SupportTicket.user_id == str(current_user.id),
+        )
+    )
+    ticket = result.scalars().first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    await db.delete(ticket)
+    await db.commit()
 
