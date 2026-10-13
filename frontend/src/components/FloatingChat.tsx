@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
+  AlertTriangle,
+  CheckCircle2,
   History,
   MessageSquare,
   Trash2,
@@ -40,6 +42,21 @@ const quickTopicOptions = [
 
 function createChatSessionId(): string {
   return `session-${Date.now()}`;
+}
+
+function createWelcomeChatSession(time: string): ChatSession {
+  return {
+    id: createChatSessionId(),
+    title: "New Conversation",
+    time,
+    messages: [
+      {
+        sender: "bot",
+        text: "Welcome to Saarthi AI. What can I help you with today?",
+        time,
+      },
+    ],
+  };
 }
 
 /**
@@ -214,16 +231,18 @@ export default function FloatingChat({
 }: FloatingChatProps) {
   const [isOpen, setIsOpen] = useState(role === "user");
   const [showHistory, setShowHistory] = useState(false);
+  const [showClearConfirmation, setShowClearConfirmation] = useState(false);
+  const [chatDeletedNotice, setChatDeletedNotice] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([
     {
       id: "session-1",
-      title: "Saarthi",
+      title: "New Conversation",
       time: "10:00 AM",
       messages: [
         {
           sender: "bot",
-          text: "Welcome to Saarthi AI. What can I help you with today?",
+          text: "Welcome to Saarthi AI. How can I help you with today?",
           time: "10:00 AM",
         },
       ],
@@ -242,6 +261,12 @@ export default function FloatingChat({
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [activeSession?.messages, showHistory, isOpen, loading]);
+
+  useEffect(() => {
+    if (!chatDeletedNotice) return;
+    const timeoutId = window.setTimeout(() => setChatDeletedNotice(false), 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [chatDeletedNotice]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -386,39 +411,65 @@ export default function FloatingChat({
   };
 
   const handleNewChat = () => {
-    const newId = createChatSessionId();
-    const newSession: ChatSession = {
-      id: newId,
-      title: "Saarthi",
-      time: getCurrentTime(),
-      messages: [
-        {
-          sender: "bot",
-          text: "Welcome to Saarthi AI. What can I help you with today?",
-          time: getCurrentTime(),
-        },
-      ],
-    };
+    const newSession = createWelcomeChatSession(getCurrentTime());
     setSessions([newSession, ...sessions]);
-    setActiveSessionId(newId);
+    setActiveSessionId(newSession.id);
     setShowHistory(false);
+  };
+
+  const handleClearChat = () => {
+    if (loading) return;
+
+    const newSession = createWelcomeChatSession(getCurrentTime());
+    setSessions((currentSessions) => [
+      newSession,
+      ...currentSessions.filter((session) => session.id !== activeSessionId),
+    ]);
+    setActiveSessionId(newSession.id);
+    setInputQuery("");
+    setShowHistory(false);
+    setShowClearConfirmation(false);
+    setChatDeletedNotice(true);
   };
 
   const handleDeleteSession = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const filtered = sessions.filter((s) => s.id !== id);
     if (filtered.length === 0) {
-      handleNewChat();
+      const newSession = createWelcomeChatSession(getCurrentTime());
+      setSessions([newSession]);
+      setActiveSessionId(newSession.id);
+      setShowHistory(false);
     } else {
       setSessions(filtered);
       if (activeSessionId === id) {
         setActiveSessionId(filtered[0].id);
       }
     }
+    setChatDeletedNotice(true);
   };
 
   return (
     <>
+      {chatDeletedNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed right-5 top-5 z-[70] flex items-center gap-2.5 rounded-xl border border-emerald-300 bg-white px-4 py-3 text-sm font-semibold text-emerald-800 shadow-xl"
+        >
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+          <span>Chat deleted successfully.</span>
+          <button
+            type="button"
+            onClick={() => setChatDeletedNotice(false)}
+            aria-label="Dismiss notification"
+            className="ml-2 cursor-pointer rounded px-1 text-emerald-700 hover:bg-emerald-50"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Full-screen support workspace */}
       {isOpen && (
         <div className="chatbot-workspace fixed inset-0 z-50 flex h-[100dvh] w-full animate-fadeIn">
@@ -488,10 +539,87 @@ export default function FloatingChat({
                   <span className="hidden sm:inline">New Chat</span>
                 </button>
 
+                {activeSession.messages.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowClearConfirmation(true)}
+                    disabled={loading}
+                    className="text-xs bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    title="Clear current conversation"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-500" />
+                    <span className="hidden sm:inline">Clear Chat</span>
+                  </button>
+                )}
+
               </div>
             </div>
 
             {/* Body Section */}
+            {!showHistory && (
+                <div className="shrink-0 border-b border-sky-100 bg-sky-50 px-4 py-2.5 sm:px-6">
+                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-600">
+                    <span className="text-slate-700">Quick Topics:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {quickTopicOptions.map((topic) => (
+                        <button
+                          key={topic}
+                          type="button"
+                          onClick={() => handleSend(undefined, topic)}
+                          className="cursor-pointer rounded-full border border-sky-300 bg-transparent px-3 py-1.5 text-xs font-semibold text-slate-700 transition-all hover:border-cyan-500 hover:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 active:scale-[0.99]"
+                        >
+                          {topic}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {showClearConfirmation && (
+              <div
+                className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+                role="presentation"
+                onClick={() => setShowClearConfirmation(false)}
+              >
+                <div
+                  className="w-full max-w-md rounded-2xl border-2 border-rose-300 bg-white p-6 shadow-[0_12px_40px_rgba(239,68,68,0.2)]"
+                  role="alertdialog"
+                  aria-modal="true"
+                  aria-labelledby="clear-chat-title"
+                  aria-describedby="clear-chat-description"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="mb-3 flex items-center gap-3 text-rose-700">
+                    <AlertTriangle className="h-6 w-6 shrink-0" />
+                    <h2 id="clear-chat-title" className="text-base font-black">
+                      Clear Chat History?
+                    </h2>
+                  </div>
+                  <p id="clear-chat-description" className="mb-5 text-sm leading-relaxed text-slate-700">
+                    Are you sure you want to permanently clear this conversation? It will be removed from your chat history.
+                  </p>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowClearConfirmation(false)}
+                      className="cursor-pointer rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearChat}
+                      className="flex cursor-pointer items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Confirm Clear</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {showHistory ? (
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 w-full space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
@@ -578,27 +706,6 @@ export default function FloatingChat({
                         )}
                     </div>
                   ))}
-
-                  {activeSession.messages.length === 1 &&
-                    activeSession.messages[0].sender === "bot" && (
-                      <div className="px-2 sm:px-3">
-                        <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-600">
-                          <span className="text-slate-700">Quick Topics:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {quickTopicOptions.map((topic) => (
-                              <button
-                                key={topic}
-                                type="button"
-                                onClick={() => handleSend(undefined, topic)}
-                                className="rounded-full border border-sky-300 bg-transparent px-3 py-1.5 text-xs font-semibold text-slate-700 transition-all hover:border-cyan-500 hover:bg-cyan-50 active:scale-[0.99]"
-                              >
-                                {topic}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                   {loading && (
                     <div className="flex items-center gap-2.5 text-cyan-400 text-sm font-bold animate-pulse px-2 py-1">
