@@ -540,7 +540,7 @@ Troubleshooting steps for Printer Offline Issue:
 
 
 [TRIGGERS]
-Paper Jam Issue, paper jam, paper stuck in printer, printer jam error
+Paper Jam Issue, paper jam, paper stuck in printer, printer jam error, printer jam issue, printer jam issues
 [ANSWER]
 Troubleshooting steps for Paper Jam Clearing:
 
@@ -1095,7 +1095,7 @@ Troubleshooting steps for SAP Export to Excel Failure:
 ################################################################################################FALLBACK########################################
 
 [FALLBACK]
-Hello! I am your IT Support Assistant. 
+Welcome to Saarthi AI. What can I help you with today?
 
 Please note: I can only assist with IT-related queries and technical support.
 

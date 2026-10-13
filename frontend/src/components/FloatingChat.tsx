@@ -30,6 +30,14 @@ interface FloatingChatProps {
   title?: string;
 }
 
+const quickTopicOptions = [
+  "Hardware Issues",
+  "Software Issues",
+  "Printer Issues",
+  "Computer Issues",
+  "SAP / ERP Issues",
+];
+
 function createChatSessionId(): string {
   return `session-${Date.now()}`;
 }
@@ -202,7 +210,7 @@ function BotMessageRenderer({
 
 export default function FloatingChat({
   role = "user",
-  title = "Ind Sphinx IT Assistant",
+  title = "Saarthi",
 }: FloatingChatProps) {
   const [isOpen, setIsOpen] = useState(role === "user");
   const [showHistory, setShowHistory] = useState(false);
@@ -210,12 +218,12 @@ export default function FloatingChat({
   const [sessions, setSessions] = useState<ChatSession[]>([
     {
       id: "session-1",
-      title: "IT Support Assistant",
+      title: "Saarthi",
       time: "10:00 AM",
       messages: [
         {
           sender: "bot",
-          text: `Please select the IT support category you need assistance with:\n\n• Hardware Issues\n• Software Issues\n• Printer Issues\n• Computer Issues\n• SAP / ERP Issues`,
+          text: "Welcome to Saarthi AI. What can I help you with today?",
           time: "10:00 AM",
         },
       ],
@@ -226,7 +234,7 @@ export default function FloatingChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
-  const displayTitle = role === "user" ? "Welcome to IT Chatboat" : title;
+  const displayTitle = role === "user" ? "Welcome to IT Chatboat (Saarthi)" : title;
   const raiseTicketLabel = role === "user" ? "RAISE CHATBOT COMPLAINT TO IT TEAM" : "RAISE IT TICKET";
 
   useEffect(() => {
@@ -323,7 +331,9 @@ export default function FloatingChat({
       prev.map((session) => {
         if (session.id === activeSessionId) {
           const isDefaultTitle =
-            session.title === "New Conversation" || session.title === "IT Support Assistant";
+            session.title === "New Conversation" ||
+            session.title === "IT Support Assistant" ||
+            session.title === "Saarthi";
           const newTitle = isDefaultTitle ? query.slice(0, 22) : session.title;
           return {
             ...session,
@@ -379,12 +389,12 @@ export default function FloatingChat({
     const newId = createChatSessionId();
     const newSession: ChatSession = {
       id: newId,
-      title: "New Conversation",
+      title: "Saarthi",
       time: getCurrentTime(),
       messages: [
         {
           sender: "bot",
-          text: `Please select the IT support category you need assistance with:\n\n• Hardware Issues\n• Software Issues\n• Printer Issues\n• Computer Issues\n• SAP / ERP Issues`,
+          text: "Welcome to Saarthi AI. What can I help you with today?",
           time: getCurrentTime(),
         },
       ],
@@ -560,13 +570,35 @@ export default function FloatingChat({
                           />
                         )}
                       </div>
-                      {m.sender === "bot" && (
-                        <span className="text-xs text-slate-500 mt-1 font-bold px-2">
-                          {m.time}
-                        </span>
-                      )}
+                      {m.sender === "bot" &&
+                        !(idx === 0 && activeSession.messages.length === 1) && (
+                          <span className="text-xs text-slate-500 mt-1 font-bold px-2">
+                            {m.time}
+                          </span>
+                        )}
                     </div>
                   ))}
+
+                  {activeSession.messages.length === 1 &&
+                    activeSession.messages[0].sender === "bot" && (
+                      <div className="px-2 sm:px-3">
+                        <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-600">
+                          <span className="text-slate-700">Quick Topics:</span>
+                          <div className="flex flex-wrap gap-2">
+                            {quickTopicOptions.map((topic) => (
+                              <button
+                                key={topic}
+                                type="button"
+                                onClick={() => handleSend(undefined, topic)}
+                                className="rounded-full border border-sky-300 bg-transparent px-3 py-1.5 text-xs font-semibold text-slate-700 transition-all hover:border-cyan-500 hover:bg-cyan-50 active:scale-[0.99]"
+                              >
+                                {topic}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                   {loading && (
                     <div className="flex items-center gap-2.5 text-cyan-400 text-sm font-bold animate-pulse px-2 py-1">

@@ -10,7 +10,7 @@ type UserSupportRule = {
 
 function loadKnowledgeBaseTxt(): { rules: UserSupportRule[]; fallback: string } {
   const defaultFallback =
-    "Hello! I am your IT Support Assistant. I can help you troubleshoot:\n\n• Hardware Issues\n• Software Issues\n• Printer Issues\n• Computer Issues\n• SAP / ERP Issues\n\nPlease select one of the options above or describe what issue you are facing.";
+    "Welcome to Saarthi AI. What can I help you with today?";
 
   try {
     const txtPath = path.join(process.cwd(), 'src', 'app', 'api', 'chat', 'user-support-answers.txt');
@@ -111,9 +111,16 @@ function isValidNmapTarget(target: string): boolean {
     && /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(target);
 }
 
+function normalizeSupportText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function getUserAnswer(message: string, history?: { sender: string; text: string }[]): string {
-  // Regex cleaning ke saath normalized input
-  let cleanInput = message.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').trim();
+  let cleanInput = normalizeSupportText(message);
 
   // Context-aware numeric input handling (e.g. user enters "1", "2", "5", etc.)
   const numericMatch = cleanInput.match(/^(\d{1,2})$/);
@@ -224,40 +231,27 @@ function getUserAnswer(message: string, history?: { sender: string; text: string
     }
   }
 
-  const words = cleanInput.split(/\s+/).filter(Boolean);
-  const wordCount = words.length;
-
-  // Generic single words jo lamba sentence moderate hone par list open nahi hone denge
-  const broadKeywords = ["printer", "software", "hardware", "computer", "sap"];
-
   const { rules, fallback } = loadKnowledgeBaseTxt();
 
-  let bestMatchRule: UserSupportRule | null = null;
-  let maxTriggerLength = 0;
+  const paddedInput = ` ${cleanInput} `;
+  const matchingTriggers = rules.flatMap((rule) =>
+    rule.triggers
+      .map((trigger) => ({ rule, trigger: normalizeSupportText(trigger) }))
+      .filter(({ trigger }) => trigger && trigger !== "*")
+  );
+  matchingTriggers.sort((a, b) => {
+    const aIsMenu = /^please select\b/i.test(a.rule.answer.trim());
+    const bIsMenu = /^please select\b/i.test(b.rule.answer.trim());
 
-  for (const rule of rules) {
-    for (const trigger of rule.triggers) {
-      const cleanTrigger = trigger.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').trim();
+    return Number(aIsMenu) - Number(bIsMenu) || b.trigger.length - a.trigger.length;
+  });
 
-      if (!cleanTrigger || cleanTrigger === "*") continue;
+  // Prefer specific answers over category menus, then check longest triggers first.
+  const bestMatch = matchingTriggers.find(({ trigger }) =>
+    paddedInput.includes(` ${trigger} `)
+  );
 
-      // Rule 1: Agar user ne sentence likha hai (> 2 words), toh single broad word skip kar do
-      if (wordCount > 2 && broadKeywords.includes(cleanTrigger)) {
-        continue;
-      }
-
-      // Exact ya Substring match check
-      if (cleanInput === cleanTrigger || cleanInput.includes(cleanTrigger)) {
-        // Rule 2: Longest Match First - Sabse lambe phrase trigger ko priority do
-        if (cleanTrigger.length > maxTriggerLength) {
-          maxTriggerLength = cleanTrigger.length;
-          bestMatchRule = rule;
-        }
-      }
-    }
-  }
-
-  return bestMatchRule?.answer || fallback;
+  return bestMatch?.rule.answer || fallback;
 }
 
 export async function POST(req: NextRequest) {
