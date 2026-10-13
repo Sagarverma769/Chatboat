@@ -1,0 +1,1109 @@
+##################################################################################################################################
+# IND SPHINX IT SUPPORT CHATBOT - KNOWLEDGE BASE (.TXT FORMAT)
+######################################################################FORMAT#############################################################
+# In this file, you or your team can easily add, edit, or remove chatbot Q&As!
+# No JSON formatting, no tricky brackets, quotes, or commas.
+#
+# HOW TO ADD A NEW QUESTION & ANSWER:
+# Simply write:
+# [TRIGGERS]
+# your keyword 1, your keyword 2, common phrases
+# [ANSWER]
+# Your answer text here... (normal Enter key for multiple lines)
+# Use bullet dots (•) if you want clickable options or clean lists.
+
+######################################################################MAIN MENU & CATEGORIES######################################################
+######################################################################MAIN LIST START#############################################################
+[TRIGGERS]
+menu, main menu, help, options, start, categories, support menu, it menu, hi, hello, hey
+[ANSWER]
+Please select the IT support category you need assistance with:
+
+• Hardware Issues
+• Software Issues
+• Printer Issues
+• Computer Issues
+• SAP ERP Issues
+####################################################################MAIN LIST ENDED#############################################################
+
+
+
+######################################################################HARDWARE ISSUES#########################################################
+
+[TRIGGERS]
+Hardware Issues, hardware, hardware issues, hardware help, hardware menu
+[ANSWER]
+Please select the Hardware Issue you are facing:
+• Power Issues
+• Computer or Laptop Not Turning On
+• No Display or Black Screen
+• Keyboard or Mouse Not Working
+• Overheating or Loud Fan Noise
+• Startup Beep Sound or RAM Error
+• Hard Drive Not Detected
+• No Audio or Headphone Jack Not Working
+• Wi-Fi Adapter Missing or Not Working
+• Battery Not Charging
+• USB Port Not Working
+#######################################################################SUBLIST#############################################
+#POWER ISSUES
+######################################################################POWER ISSUES LIST####################################
+[TRIGGERS]
+Power Issues, power issue, power issues, laptop power issue, pc dead, power problem
+[ANSWER]
+Please select the specific Power Issue you are facing:
+
+• Laptop Charging Port Loose or Not Working
+• Charger Adapter Light Blinking or OFF
+• Laptop Power Light Turns On Then Shut Down
+• Desktop PC No Power Light at All
+• Laptop Plugged In But Battery Not Charging
+
+
+######################################################################POWER ISSUES ANSWERS###############################
+[TRIGGERS]
+Laptop Charging Port Loose or Not Working, loose charging port, charger socket loose, laptop pin issue
+[ANSWER]
+Troubleshooting steps for Loose Charging Port:
+
+• Inspect laptop charging port pin for physical bends
+• Plug charger gently without applying extra pressure
+• Connect charger to another wall socket directly
+• Check if charging LED light turns on when held at an angle
+• If port is broken contact IT support for socket repair
+
+
+
+[TRIGGERS]
+Charger Adapter Light Blinking or OFF, charger light blinking, adapter LED off, charger brick dead
+[ANSWER]
+Troubleshooting steps for Charger Adapter Issue:
+
+• Unplug power adapter from wall socket for 2 minutes
+• Check power cord connection between adapter and cable
+• Reconnect adapter directly to wall outlet without extension
+• Inspect cable wire for sharp bends or exposed copper
+• If adapter light stays off replace power adapter via IT
+
+
+
+[TRIGGERS]
+Laptop Power Light Turns On Then Shut Down, power light turns on then off, laptop auto shutdown on power on, laptop fan spins then stops
+[ANSWER]
+Troubleshooting steps for Instant Shutdown Issue:
+
+• Unplug charger cable from laptop completely
+• Disconnect all external USB drives and mouse dongles
+• Press and hold power button down for 30 seconds
+• Reconnect charger cable only without USB devices
+• Press power button once to check normal boot
+• If laptop turns off instantly contact IT for thermal check
+
+
+
+[TRIGGERS]
+Desktop PC No Power Light at All, desktop no power, cpu dead no light, desktop power button not working
+[ANSWER]
+Troubleshooting steps for Desktop Power Issue:
+
+• Check CPU power cable behind cabinet is plugged in tightly
+• Switch off main wall socket power switch
+• Unplug power cable from CPU cabinet back
+• Press and hold CPU front power button for 30 seconds
+• Plug power cable back firmly and switch on main socket
+• If CPU fan does not spin contact IT for power supply check
+
+
+
+[TRIGGERS]
+Laptop Plugged In But Battery Not Charging, plugged in not charging, battery percentage stuck, battery not increasing
+[ANSWER]
+Troubleshooting steps for Plugged In Not Charging Issue:
+
+• Press Win + R on keyboard
+• Type devmgmt.msc and press Enter
+• Expand Batteries section dropdown
+• Right click Microsoft ACPI Control Method Battery
+• Click Uninstall device option
+• Shut down laptop completely from Start menu
+• Unplug charger cable and hold power button for 20 seconds
+• Reconnect charger and power on laptop to reload driver
+
+
+######################################################################HARDWARE ANSWERS##############################################
+[TRIGGERS]
+Computer or Laptop Not Turning On, computer not turning on, laptop not turning on
+[ANSWER]
+Troubleshooting steps for Power and Charging Issue:
+
+• Plug phone charger in socket to test power
+• Check adapter cable for cuts or damage
+• Unplug charger and all USB devices
+• Press and hold power button for 30 seconds
+• Reattach charger and press power button
+• Check if charger LED light turns on steady
+• Unplug desktop power cord from cabinet back
+• Press and hold desktop power button for 30 seconds
+• Plug power cord back in tightly and power on
+• If power light stays off contact IT support
+
+
+
+
+[TRIGGERS]
+No Display or Black Screen, no display, black screen, monitor issue, monitor not working, screen flickering, blue light blinking but no display
+[ANSWER]
+Troubleshooting steps for No Display and Black Screen:
+
+• Check monitor power cable and turn on power button
+• Unplug HDMI or VGA cable from monitor and CPU
+• Re-plug display cable tightly at both ends
+• Press Win + Ctrl + Shift + B on keyboard together
+• Wait for screen flash and beep sound
+• Press Win + P on keyboard
+• Use down arrow key and press Enter to select main screen
+• If display stays black contact IT support
+
+
+
+[TRIGGERS]
+Keyboard or Mouse Not Working, keyboard not working, mouse not working, usb device not recognized, touch pad issue, trackpad not working
+[ANSWER]
+Troubleshooting steps for Keyboard and Mouse Issue:
+
+• Unplug USB cable or wireless dongle
+• Plug into back USB port of CPU directly
+• Replace wireless mouse batteries with new ones
+• Turn bottom power switch to ON position
+• Press Win + R on keyboard
+• Type devmgmt.msc and press Enter
+• Navigate to Keyboards or Mice section
+• Right click your device name
+• Click Uninstall device
+• Restart computer to reload driver
+• If device remains dead contact IT support
+
+
+
+[TRIGGERS]
+Overheating or Loud Fan Noise, overheating, fan noise, laptop heating, cpu temperature high, loud fan, system turning off due to heat
+[ANSWER]
+Troubleshooting steps for Overheating and Fan Noise:
+
+• Remove paper or cloth near air vents
+• Move laptop from bed or cushion to hard flat desk
+• Press Ctrl + Shift + Esc to open Task Manager
+• Click CPU column header to sort processes
+• Select high CPU process and click End Task
+• Press Win + R and type powercfg.cpl
+• Click Change plan settings
+• Click Change advanced power settings
+• Expand Processor power management
+• Change Maximum processor state from 100 to 95
+• If fan makes grinding noise contact IT support
+
+
+
+[TRIGGERS]
+Startup Beep Sound or RAM Error, ram error, beep sound, continuous beep, memory error, startup beep
+[ANSWER]
+Troubleshooting steps for Startup Beep Sounds:
+
+• Turn off PC and switch off main power plug
+• Remove CPU cabinet side panel cover
+• Push down RAM slot plastic latches on both ends
+• Pull out RAM memory stick gently
+• Clean gold contact pins using dry eraser
+• Insert RAM back into slot until latches click
+• Plug power cable back in and turn on PC
+• If beep sounds continue contact IT support
+
+
+
+[TRIGGERS]
+Hard Drive Not Detected, hard drive crash, hdd crash, external hard drive not showing, hard disk error, ssd not detected
+[ANSWER]
+Troubleshooting steps for Hard Drive and Storage Issue:
+
+• Plug external drive into blue USB 3.0 port directly
+• Press Win + R on keyboard
+• Type diskmgmt.msc and press Enter
+• Right click Offline drive disk and click Online
+• Right click drive volume letter
+• Click Change Drive Letter and Paths
+• Click Add and select drive letter E
+• Press Win + R, type cmd, press Ctrl + Shift + Enter
+• Type chkdsk E: /f and press Enter
+• If drive makes continuous clicking noise unplug immediately
+
+
+
+[TRIGGERS]
+No Audio or Headphone Jack Not Working, no sound, audio issue, headphone jack not working, speaker issue, mic issue, microphone not working
+[ANSWER]
+Troubleshooting steps for Audio and Microphone Issue:
+
+• Push audio jack cable completely into green port
+• Click Speaker icon in bottom right taskbar corner
+• Click arrow icon and select correct headphones
+• Press Win + R on keyboard
+• Type mmsys.cpl and press Enter
+• Right click headphones and click Set as Default
+• Open Windows Settings
+• Click Privacy and Security
+• Click Microphone option
+• Turn ON Allow apps to access your microphone
+
+
+
+[TRIGGERS]
+Wi-Fi Adapter Missing or Not Working, wifi missing, wifi adapter error, no wifi option, network card missing
+[ANSWER]
+Troubleshooting steps for Missing Wi-Fi Adapter:
+
+• Check laptop side switch or Fn + F2 keys
+• Press Win + A and turn Airplane Mode OFF
+• Press Win + R on keyboard
+• Type devmgmt.msc and press Enter
+• Expand Network adapters category
+• Right click Wi-Fi adapter
+• Click Uninstall device
+• Click Action menu at top toolbar
+• Click Scan for hardware changes
+• Restart computer completely
+
+
+
+[TRIGGERS]
+Battery Not Charging, laptop battery issue, battery discharging fast, plugged in not charging, battery dead
+[ANSWER]
+Troubleshooting steps for Battery and Charging Issue:
+
+• Plug charger directly into main wall socket
+• Press Win + R on keyboard
+• Type devmgmt.msc and press Enter
+• Expand Batteries section
+• Right click Microsoft ACPI Control Method Battery
+• Click Uninstall device
+• Shut down laptop completely
+• Unplug charger cable from laptop
+• Hold power button down for 20 seconds
+• Plug charger back in and turn on laptop
+
+
+
+[TRIGGERS]
+USB Port Not Working, usb port dead, front usb port issue, usb hub issue
+[ANSWER]
+Troubleshooting steps for USB Port Failure:
+
+• Plug device into rear USB ports on CPU back panel
+• Press Win + R on keyboard
+• Type powercfg.cpl and press Enter
+• Click Change plan settings
+• Click Change advanced power settings
+• Expand USB settings option
+• Set USB selective suspend to Disabled
+• Press Win + R and type devmgmt.msc
+• Expand Universal Serial Bus controllers
+• Right click USB Root Hub and click Uninstall
+• Restart computer to reload ports
+
+#######################################################################SOFTWARE ISSUES########################################################
+
+[TRIGGERS]
+Software Issues, software, software issues, software help, software menu
+[ANSWER]
+Please select the Software Issue you are facing:
+
+• Blue Screen of Death (BSOD)
+• Windows Activation or License Expired
+• Antivirus or Security Warnings
+• MS Office or Outlook Crashing
+• Web Browser or SSL Certificate Error
+• VPN Connection Issue
+• File Corrupted or Cannot Open PDF or Excel
+• Windows Update Failed or Stuck
+• Software Installation Request
+• Application Stopped Working Error
+
+######################################################################SOFTWARE ANSWERS#########################################################
+
+[TRIGGERS]
+Blue Screen of Death (BSOD), bsod, blue screen, blue screen of death, system crashed, stop code, windows crash
+[ANSWER]
+Troubleshooting steps for Blue Screen of Death (BSOD):
+
+• Note down stop code error shown on screen
+• Unplug external USB hard drives and extra display cables
+• Press Win + R on keyboard
+• Type cmd and press Ctrl + Shift + Enter
+• Type sfc /scannow and press Enter
+• Wait for scan to reach 100 percent
+• Type DISM.exe /Online /Cleanup-image /Restorehealth
+• Press Enter and restart computer
+• If blue screen continues send stop code screenshot to IT
+
+
+
+[TRIGGERS]
+Windows Activation or License Expired, windows activation, license expired, activate windows error, product key invalid, office license expired
+[ANSWER]
+Troubleshooting steps for Windows Activation:
+
+• Connect laptop to office Wi-Fi network or corporate VPN
+• Press Win + R on keyboard
+• Type cmd and press Ctrl + Shift + Enter
+• Type slmgr.vbs /ato and press Enter
+• Wait for activation success message box
+• Press Win + I to open Windows Settings
+• Click Update and Security
+• Click Activation option from left menu
+• Click Troubleshoot button
+
+
+
+[TRIGGERS]
+Antivirus or Security Warnings, antivirus blocking, antivirus error, firewall blocking, app blocked by security, malware alert
+[ANSWER]
+Troubleshooting steps for Antivirus Security Block:
+
+• Take screenshot of blocked pop up alert window
+• Right click downloaded setup file
+• Click Properties option
+• Go to General tab bottom right
+• Check Unblock box option
+• Click Apply button and click OK
+• Open setup file again
+• If block remains attach screenshot to IT ticket
+
+
+
+[TRIGGERS]
+MS Office or Outlook Crashing, outlook crashing, ms office error, excel freezing, word not responding, outlook not opening, ms teams not working
+[ANSWER]
+Troubleshooting steps for MS Office and Outlook Crashes:
+
+• Press Win + R on keyboard
+• Type outlook.exe /safe and press Enter
+• Click File menu at top left
+• Click Options and select Add-ins
+• Select COM Add-ins from Manage dropdown
+• Click Go button
+• Uncheck all third party add-in check boxes
+• Click OK and restart Outlook normally
+• Open Control Panel and click Programs and Features
+• Right click Microsoft 365 Apps and click Change
+• Click Quick Repair and click Repair button
+
+
+
+[TRIGGERS]
+Web Browser or SSL Certificate Error, ssl certificate error, web browser error, site security error, chrome error, edge error, website not loading
+[ANSWER]
+Troubleshooting steps for Web Browser SSL Errors:
+
+• Right click clock display in taskbar corner
+• Click Adjust date and time option
+• Turn ON Set time automatically switch
+• Click Sync now button
+• Open Chrome or Edge browser
+• Press Ctrl + Shift + Delete on keyboard
+• Select All time from time range dropdown
+• Check Cookies and Cached images boxes
+• Click Clear data button
+• Test site in Incognito mode using Ctrl + Shift + N
+
+
+
+[TRIGGERS]
+VPN Connection Issue, vpn connection, vpn error, vpn disconnecting, forticlient error, cisco vpn failed, vpn authentication failed
+[ANSWER]
+Troubleshooting steps for Corporate VPN Failure:
+
+• Disconnect VPN and check normal internet access
+• Press Win + R on keyboard
+• Type cmd and press Ctrl + Shift + Enter
+• Type ipconfig /flushdns and press Enter
+• Press Win + R and type ncpa.cpl
+• Right click virtual VPN adapter
+• Click Disable option
+• Wait 5 seconds, right click and click Enable
+• Check domain password expiry status
+• Approve mobile phone Authenticator push notification
+• Press Win + R, type services.msc, restart VPN service agent
+
+
+
+[TRIGGERS]
+File Corrupted or Cannot Open PDF or Excel, file corrupted, cannot open pdf, cannot open docx, cannot open excel, file format error
+[ANSWER]
+Troubleshooting steps for Corrupted File Recovery:
+
+• Right click file and select Properties
+• Check Unblock box at bottom right
+• Click Apply and click OK
+• Open Word or Excel application first
+• Click File menu at top left
+• Click Open and click Browse
+• Select damaged file with single click
+• Click arrow icon next to Open button
+• Click Open and Repair option
+• Click Repair button to recover data
+
+
+
+[TRIGGERS]
+Windows Update Failed or Stuck, windows update error, windows update failed, windows update stuck, feature update error
+[ANSWER]
+Troubleshooting steps for Windows Update Failures:
+
+• Press Win + R on keyboard
+• Type services.msc and press Enter
+• Right click Windows Update service
+• Click Stop option
+• Press Win + R on keyboard
+• Type C:\Windows\SoftwareDistribution and press Enter
+• Select all files using Ctrl + A and press Delete
+• Return to Services window
+• Right click Windows Update service and click Start
+• Open Windows Settings and run Update Troubleshooter
+
+
+
+[TRIGGERS]
+Software Installation Request, software installation, install software, need software install, admin permission software
+[ANSWER]
+Troubleshooting steps for Software Installation Requests:
+
+• Press Windows key on keyboard
+• Type Software Center and press Enter
+• Click Applications tab option
+• Select target software from list
+• Click Install button directly
+• Save custom installers in C:\Temp folder
+• Avoid entering wrong admin passwords on UAC prompt
+• Submit IT ticket for unlisted software requests
+
+
+
+[TRIGGERS]
+Application Stopped Working Error, app stopped working, program crashed, application error 0xc000007b, dll missing
+[ANSWER]
+Troubleshooting steps for Application Crashes and DLL Errors:
+
+• Download and install Visual C++ Redistributable packages
+• Open Control Panel and click Programs and Features
+• Click Turn Windows features on or off
+• Check .NET Framework 3.5 and 4.8 boxes
+• Click OK button
+• Press Win + R, type cmd, press Ctrl + Shift + Enter
+• Type sfc /scannow and press Enter
+• Press Win + R, type %appdata%, press Enter
+• Open target app folder and rename cache folder
+
+#######################################################################PRINTER ISSUES#########################################################
+
+[TRIGGERS]
+Printer Issues, printer, printer issues, printer help, scanner, scanner issues
+[ANSWER]
+Please select the Printer or Scanner Issue you are facing:
+
+• Printer Showing Offline or Not Responding
+• Paper Jam Issue
+• Print Job Stuck in Queue or Spooler Error
+• Poor Print Quality or Blurry or Faded Print
+• Scanner or Network Scanning Not Working
+• Low Toner or Cartridge Replacement
+• Printer Printing Blank Pages
+• Printer Driver Error
+• Double Sided Printing Not Working
+• Network Printer Not Found
+
+######################################################################PRINTER ANSWERS##########################
+
+[TRIGGERS]
+Printer Showing Offline or Not Responding, printer offline, printer not responding, network printer offline, printer disconnected
+[ANSWER]
+Troubleshooting steps for Printer Offline Issue:
+
+• Turn printer power switch OFF and ON
+• Check network cable LED light on printer back
+• Open Control Panel on computer
+• Click View devices and printers
+• Double click target printer icon
+• Click Printer menu at top left
+• Uncheck Use Printer Offline option
+• Uncheck Pause Printing option
+• Press Win + R, type cmd, and ping printer IP
+
+
+
+[TRIGGERS]
+Paper Jam Issue, paper jam, paper stuck in printer, printer jam error
+[ANSWER]
+Troubleshooting steps for Paper Jam Clearing:
+
+• Turn off printer main power switch
+• Unplug printer power cable from socket
+• Pull out paper tray 1 and tray 2
+• Pull jammed paper out gently using both hands
+• Open front cover door and remove toner
+• Remove paper scraps from inside roller area
+• Re-insert toner cartridge until it clicks
+• Close all printer doors and power on
+
+
+
+[TRIGGERS]
+Print Job Stuck in Queue or Spooler Error, print queue stuck, spooler error, clear print queue, print job not clearing
+[ANSWER]
+Troubleshooting steps for Stuck Print Queue:
+
+• Press Win + R on keyboard
+• Type cmd and press Ctrl + Shift + Enter
+• Type net stop spooler and press Enter
+• Type del /Q /F /S "%systemroot%\System32\Spool\Printers\*.*"
+• Press Enter to delete stuck print files
+• Type net start spooler and press Enter
+• Open Devices and Printers window
+• Double click printer icon
+• Click Printer menu and click Cancel All Documents
+
+
+
+[TRIGGERS]
+Poor Print Quality or Blurry or Faded Print, blurry print, faded print, lines on paper, print quality issue, streak on paper
+[ANSWER]
+Troubleshooting steps for Poor Print Quality:
+
+• Open printer front cover door
+• Remove toner cartridge carefully
+• Shake toner cartridge side to side 5 times
+• Insert toner cartridge back into printer
+• Open Control Panel and go to Devices and Printers
+• Right click printer and click Printing preferences
+• Change Paper Type setting to Heavyweight
+• Slide green corona wire tab back and forth 3 times
+
+
+
+[TRIGGERS]
+Scanner or Network Scanning Not Working, scanner not working, network scan error, cannot scan document, scanner offline, scan to folder failed
+[ANSWER]
+Troubleshooting steps for Scanner and Scan-to-Folder Errors:
+
+• Right click scan destination folder on PC
+• Click Properties option
+• Go to Sharing tab and click Advanced Sharing
+• Check Share this folder option
+• Click Permissions button and check Full Control
+• Open Control Panel and click Programs and Features
+• Click Turn Windows features on or off
+• Check SMB 1.0 or SMB Direct feature box
+• Click OK button and restart computer
+
+
+
+[TRIGGERS]
+Low Toner or Cartridge Replacement, toner low, cartridge empty, replace toner, ink low warning
+[ANSWER]
+Troubleshooting steps for Low Toner Replacement:
+
+• Open front door and read toner model label
+• Remove low toner cartridge from printer
+• Shake cartridge horizontally 5 times to free powder
+• Insert cartridge back to print urgent pages
+• Unbox new replacement toner cartridge
+• Pull plastic pull tape straight out from side
+• Remove orange plastic protective cover piece
+• Insert new toner cartridge until it clicks shut
+
+
+
+[TRIGGERS]
+Printer Printing Blank Pages, blank pages printing, printer outputs white paper, no ink on paper
+[ANSWER]
+Troubleshooting steps for Blank Pages Output:
+
+• Open front cover and extract toner cartridge
+• Check if orange protective shipping tape was removed
+• Open document print preview window
+• Check if text color is set to black font
+• Open Control Panel and click Devices and Printers
+• Right click printer and select Printing preferences
+• Run Head Cleaning process for inkjet printers
+• Re-insert toner tightly to engage drive gears
+
+
+
+[TRIGGERS]
+Printer Driver Error, printer driver error, driver unavailable, printer setup error
+[ANSWER]
+Troubleshooting steps for Printer Driver Failure:
+
+• Open Control Panel and click Devices and Printers
+• Click any printer icon once
+• Click Printer server properties on top toolbar
+• Click Drivers tab option
+• Select faulty printer driver from list
+• Click Remove button at bottom
+• Select Remove driver and driver package
+• Click OK button
+• Download driver setup file from official site
+• Run installer file as Administrator
+
+
+
+[TRIGGERS]
+Double Sided Printing Not Working, duplex printing error, double sided print issue, 2 sided print not working
+[ANSWER]
+Troubleshooting steps for Double-Sided Printing Issue:
+
+• Open Control Panel and click Devices and Printers
+• Right click printer icon and select Printer properties
+• Click Device Settings tab option
+• Scroll down to Installable Options section
+• Change Duplex Unit setting to Installed
+• Click Apply button and click OK
+• Right click printer and select Printing preferences
+• Open Layout tab option
+• Select Print on Both Sides option
+• Click OK button
+
+
+
+[TRIGGERS]
+Network Printer Not Found, network printer not found, add printer failed, IP printer error
+[ANSWER]
+Troubleshooting steps for Network Printer Search Error:
+
+• Press Win + I to open Windows Settings
+• Click Devices and click Printers and scanners
+• Click Add a printer or scanner button
+• Click The printer that I want isn't listed
+• Select Add a printer using IP address option
+• Click Next button
+• Set Device type dropdown to TCP/IP Device
+• Type printer IP address into field
+• Check Query printer and auto select driver
+• Click Next button to complete setup
+
+#######################################################################COMPUTER ISSUES########################################################
+
+[TRIGGERS]
+Computer Issues, computer, computer issues, system performance, pc issues
+[ANSWER]
+Please select the Computer or System Issue you are facing:
+
+• System Running Extremely Slow or Freezing
+• C Drive Storage Full
+• Virus or Malware Popups
+• Computer Automatically Restarting
+• System Time Resetting on Reboot
+• USB Drive Access Denied
+• Blue Screen or System Crash
+• Wi-Fi Disconnecting Frequently
+• High RAM Memory Usage
+• Desktop Icons Missing or Black Screen
+
+######################################################################COMPUTER ANSWERS#########################################
+
+[TRIGGERS]
+System Running Extremely Slow or Freezing, slow pc, computer slow, laptop lag, freezing, 100 percent disk usage, 100 percent cpu usage
+[ANSWER]
+Troubleshooting steps for Slow PC Performance:
+
+• Press Ctrl + Shift + Esc to open Task Manager
+• Check CPU Memory and Disk percentage numbers
+• Press Win + R on keyboard
+• Type services.msc and press Enter
+• Right click Connected User Experiences and Telemetry
+• Set Startup type to Disabled and click Stop
+• Press Win + R, type %temp%, press Enter, delete all files
+• Press Win + R, type temp, press Enter, delete all files
+• In Task Manager Startup tab disable unnecessary apps
+• Press Win + R, type cmd, press Ctrl + Shift + Enter
+• Type chkdsk C: /f and press Enter
+
+
+
+[TRIGGERS]
+C Drive Storage Full, c drive full, low disk space, clean c drive, storage running low
+[ANSWER]
+Troubleshooting steps for Low C: Drive Space:
+
+• Press Win + R on keyboard
+• Type cleanmgr and press Enter
+• Select Drive C: and click OK
+• Click Clean up system files button
+• Check Windows Update Cleanup and Temporary Files
+• Click OK button and click Delete Files
+• Open Windows Settings and click System
+• Click Storage option from left menu
+• Toggle Storage Sense switch to ON
+• Right click Downloads folder and click Properties
+• Click Location tab and change path to D: Drive
+
+
+
+[TRIGGERS]
+Virus or Malware Popups, virus, malware, popup ads, suspicious application, malware infection, ransomware alert
+[ANSWER]
+Troubleshooting steps for Malware Infection:
+
+• Unplug LAN network cable or disconnect Wi-Fi
+• Press Windows key and type Windows Security
+• Click Virus and threat protection
+• Click Scan options link
+• Select Windows Defender Offline scan
+• Click Scan now button and restart PC
+• Open Chrome or Edge browser settings
+• Click Extensions option
+• Click Remove on suspicious add-ons
+• Press Win + R, type msconfig, go to Services
+• Check Hide all Microsoft services box
+• Uncheck unknown third party services
+
+
+
+[TRIGGERS]
+Computer Automatically Restarting, automatic restart, system restarts automatically, computer rebooting continuously
+[ANSWER]
+Troubleshooting steps for Automatic System Restarts:
+
+• Press Win + R on keyboard
+• Type sysdm.cpl and press Enter
+• Click Advanced tab option
+• Under Startup and Recovery click Settings
+• Uncheck Automatically restart check box
+• Click OK button
+• Clean dust from CPU fan and air vents
+• Open Windows Settings
+• Click Update and Security
+• Click Pause updates for 7 days button
+
+
+
+[TRIGGERS]
+System Time Resetting on Reboot, time date wrong, time resetting, cmos battery issue, bios clock error
+[ANSWER]
+Troubleshooting steps for Time and Date Reset Issue:
+
+• Right click taskbar clock display
+• Click Adjust date and time
+• Toggle Set time automatically switch OFF and ON
+• Click Sync now button
+• Press Win + R on keyboard
+• Type cmd and press Ctrl + Shift + Enter
+• Type net stop w32time and press Enter
+• Type w32tm /unregister and press Enter
+• Type w32tm /register and press Enter
+• Type net start w32time and press Enter
+• Type w32tm /resync and press Enter
+• If time resets after power off contact IT to replace battery
+
+
+
+[TRIGGERS]
+USB Drive Access Denied, usb access denied, usb drive not showing, flash drive blocked, flash drive write protected
+[ANSWER]
+Troubleshooting steps for USB Access Denied:
+
+• Press Win + R on keyboard
+• Type rsop.msc and press Enter to check policies
+• Press Win + R and type regedit
+• Go to HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\StorageDevicePolicies
+• Double click WriteProtect key
+• Change Value data from 1 to 0 and click OK
+• Go to HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\USBSTOR
+• Double click Start key
+• Change Value data to 3 and click OK
+• Press Win + R and type diskmgmt.msc
+• Right click drive and assign drive letter
+
+
+
+[TRIGGERS]
+Blue Screen or System Crash, bsod, blue screen, system crash, computer crashing
+[ANSWER]
+Troubleshooting steps for Blue Screen or System Crash:
+
+• Note down stop code error shown on screen
+• Unplug external USB hard drives and extra display cables
+• Press Win + R on keyboard
+• Type cmd and press Ctrl + Shift + Enter
+• Type sfc /scannow and press Enter
+• Wait for scan to reach 100 percent
+• Type DISM.exe /Online /Cleanup-image /Restorehealth
+• Press Enter and restart computer
+• If blue screen continues send stop code screenshot to IT
+
+
+
+[TRIGGERS]
+Wi-Fi Disconnecting Frequently, wifi disconnecting, internet dropping, frequent wifi disconnect, network drops
+[ANSWER]
+Troubleshooting steps for Frequent Wi-Fi Disconnections:
+
+• Press Win + R on keyboard
+• Type devmgmt.msc and press Enter
+• Expand Network adapters category
+• Right click Wi-Fi adapter name
+• Click Properties option
+• Click Power Management tab
+• Uncheck Allow computer to turn off device
+• Click Advanced tab option
+• Change Roaming Aggressiveness value to Lowest
+• Press Win + R, type cmd, press Ctrl + Shift + Enter
+• Type netsh winsock reset and press Enter
+
+
+
+[TRIGGERS]
+High RAM Memory Usage, high ram usage, memory leak, ram full, memory usage high
+[ANSWER]
+Troubleshooting steps for High RAM Usage:
+
+• Press Ctrl + Shift + Esc to open Task Manager
+• Click Details tab option
+• Click Memory column header to sort high usage
+• Right click high RAM process and click End Task
+• Press Win + R and type services.msc
+• Right click SysMain service
+• Set Startup type to Disabled and click Stop
+• Press Win + R and type regedit
+• Go to HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Ndu
+• Double click Start key, change Value data to 4, click OK
+
+
+
+[TRIGGERS]
+Desktop Icons Missing or Black Screen, desktop icons missing, black desktop screen, taskbar missing, explorer crash
+[ANSWER]
+Troubleshooting steps for Missing Desktop Icons and Taskbar:
+
+• Right click empty desktop area
+• Hover over View menu option
+• Ensure Show desktop icons is checked
+• Press Ctrl + Shift + Esc to open Task Manager
+• Click File menu at top left
+• Click Run new task option
+• Type explorer.exe into box
+• Check Create task with admin privileges box
+• Click OK button to restore desktop
+• Press Win + R, type cmd, press Ctrl + Shift + Enter
+• Type sfc /scannow and press Enter
+
+#######################################################################SAP ISSUES#############################################################
+
+[TRIGGERS]
+SAP ERP Issues, sap, erp, sap issues, sap help, erp issues
+[ANSWER]
+Please select the SAP or ERP Issue you are facing:
+
+• SAP GUI Login Failed or Locked Account
+• Partner Not Reached or Connection Error
+• Missing T-Code Authorization
+• SAP Spool or Printing Error
+• SAP Session Freezing
+• Transport Request TR Issue
+• SAP Dump Error or ABAP Runtime Error
+• SAP GUI Installation or Shortcut Issue
+• SAP GUI Font Size or Display Scaling Issue
+• SAP Export to Excel Failed Error
+
+######################################################################SAP ANSWERS##############################################
+
+[TRIGGERS]
+SAP GUI Login Failed or Locked Account, sap login, sap gui login, locked account, invalid credentials, sap password reset, sap account locked
+[ANSWER]
+Troubleshooting steps for SAP GUI Login and Account Lockout:
+
+• Check if Caps Lock key is turned OFF
+• Verify keyboard language is set to English
+• Wait 30 minutes for auto unlock policy
+• Open SAP Logon Pad on desktop
+• Verify correct System ID selected (PRD, DEV, QAS)
+• Verify 3 digit Client Number (e.g. 100, 200)
+• Enter User ID and password carefully
+• If account stays locked raise IT ticket for reset
+
+
+
+[TRIGGERS]
+Partner Not Reached or Connection Error, partner not reached, sap connection failed, sap network error, sap server unavailable
+[ANSWER]
+Troubleshooting steps for SAP Partner Not Reached Error:
+
+• Connect laptop to office LAN or VPN client
+• Open SAP Logon Pad application
+• Right click target connection and click Properties
+• Note Application Server IP and System Number
+• Press Win + R on keyboard
+• Type cmd and press Enter
+• Type telnet server-ip 3200 and press Enter
+• Type ipconfig /flushdns and press Enter
+• Restart SAP Logon Pad and retry connection
+
+
+
+[TRIGGERS]
+Missing T-Code Authorization, tcode missing, authorization missing, no authorization for tcode, sap role issue, su53 error
+[ANSWER]
+Troubleshooting steps for SAP T-Code Authorization Missing:
+
+• Do not close SAP error screen
+• Click T-Code command box at top left
+• Type /nSU53 and press Enter
+• Take full screenshot of SU53 output screen
+• Verify screenshot shows missing Authorization Object
+• Open IT Helpdesk Portal
+• Create ticket under SAP Security category
+• Attach SU53 screenshot and manager approval
+
+
+
+[TRIGGERS]
+SAP Spool or Printing Error, sap spool error, sap printing error, sap invoice print error, sap printer offline
+[ANSWER]
+Troubleshooting steps for SAP Spool Printing Error:
+
+• Click T-Code command box at top left
+• Type /nSP02 and press Enter
+• Check Status column for spool request
+• Verify Output Device is set to LOCL
+• Close SAP GUI application completely
+• Press Ctrl + Shift + Esc for Task Manager
+• Select saplpd.exe process and click End Task
+• Re-open SAP GUI and retry print
+• In SP01 select spool and click Print with Changed Parameters
+• Select alternate working printer device
+
+
+
+[TRIGGERS]
+SAP Session Freezing, sap freezing, sap session crash, sap not responding, sap disconnected
+[ANSWER]
+Troubleshooting steps for SAP GUI Freezing:
+
+• Press Ctrl + Alt + Delete on keyboard
+• Open Task Manager option
+• Select saplogon.exe process
+• Click End Task button
+• Keep total open SAP windows below 6 sessions
+• Open SAP Logon Pad without logging in
+• Click top left window icon and select Options
+• Go to Visual Design and click Options
+• Uncheck Enable Animations box
+• Uncheck Enable Smooth Scrolling box
+• Go to Network and check Enable Low Speed Connection
+
+
+
+[TRIGGERS]
+Transport Request TR Issue, tr error, transport request issue, sap tr release blocked, sap development error
+[ANSWER]
+Troubleshooting steps for Transport Request (TR) Errors:
+
+• Click T-Code command box at top left
+• Type /nSE09 and press Enter
+• Expand target Transport Request tree
+• Select sub task entry
+• Click Release Directly truck icon or press F9
+• Release all sub tasks first before main TR
+• Press Ctrl + F2 on ABAP code for syntax check
+• Open T-Code STMS and check Return Code 8 logs
+• Forward Return Code logs to SAP BASIS team
+
+
+
+[TRIGGERS]
+SAP Dump Error or ABAP Runtime Error, sap dump, abap dump, runtime error, short dump in sap
+[ANSWER]
+Troubleshooting steps for SAP ABAP Runtime Short Dumps:
+
+• Note down Error Key shown on red dump screen
+• Click T-Code command box at top left
+• Type /nST22 and press Enter
+• Click Today button and click Start
+• Double click top runtime error entry
+• Read What happened and Error analysis sections
+• Run heavy reports in Background Mode using F9
+• Click System menu at top toolbar
+• Click List, click Save, click Local File
+• Save dump as text file and send to ABAP team
+
+
+
+[TRIGGERS]
+SAP GUI Installation or Shortcut Issue, sap gui shortcut missing, sap logon pad missing, sap server list empty
+[ANSWER]
+Troubleshooting steps for Missing SAP Connection Shortcuts:
+
+• Press Win + R on keyboard
+• Type %appdata%\SAP\Common and press Enter
+• Copy corporate backup saplogontree.xml file here
+• Open SAP Logon Pad application
+• Click top left window icon and select Options
+• Go to Local Data under SAP GUI Configuration
+• Verify path points to %appdata%\SAP\Common\SAPUILandscape.xml
+• Click Apply button and restart SAP Logon
+• Go to C:\Program Files (x86)\SAP\FrontEnd\SAPgui
+• Right click saplogon.exe and Send to Desktop
+
+
+
+[TRIGGERS]
+SAP GUI Font Size or Display Scaling Issue, sap font size, sap display blur, sap high dpi scaling, sap screen small
+[ANSWER]
+Troubleshooting steps for SAP GUI Font and High DPI Scaling:
+
+• Open SAP Logon Pad application
+• Click top left window icon and select Options
+• Go to Visual Design and click Font Settings
+• Select 12pt or 14pt font size
+• Click Apply button and click OK
+• Right click SAP Logon shortcut on desktop
+• Click Properties and open Compatibility tab
+• Click Change high DPI settings button
+• Check Override high DPI scaling behavior box
+• Select System Enhanced from dropdown list
+• Click OK button and restart SAP GUI
+
+
+
+[TRIGGERS]
+SAP Export to Excel Failed Error, sap excel export error, sap export failed, sap grid view error, spreadsheet export error
+[ANSWER]
+Troubleshooting steps for SAP Export to Excel Failure:
+
+• Click Export icon on SAP report toolbar
+• Select Spreadsheet option
+• Select Text with Tabs or Local File Spreadsheet format
+• Do not select MHTML format option
+• Click Green Checkmark to save file to desktop
+• Open MS Excel application
+• Click File menu and click Options
+• Click Trust Center and click Trust Center Settings
+• Click File Block Settings from left menu
+• Uncheck block options for legacy workbooks
+• Press Win + R, type %temp%, delete SAP temp files
+
+
+
+################################################################################################FALLBACK########################################
+
+[FALLBACK]
+Hello! I am your IT Support Assistant. 
+
+Please note: I can only assist with IT-related queries and technical support.
+
+Here are a few topics I can help you with:
+• Hardware Issues
+• Software Issues
+• Printer Issues
+• Computer Issues
+• SAP ERP Issues
+
+Please select one of the topics above or briefly describe the issue you are facing.

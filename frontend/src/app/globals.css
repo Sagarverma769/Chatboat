@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #e0f2fe;
+  --foreground: #1e293b;
 }
 
 @theme inline {
@@ -12,17 +12,254 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.portal-content-light
+  :is(
+    [class*="bg-slate-900"],
+    [class*="bg-slate-950"],
+    [class*="bg-slate-800"],
+    [class*="bg-cyan-950"]
+  ):not(button):not(button *):not(input):not(textarea):not(select) {
+    background-color: #bae6fd !important;
+    border-color: #7dd3fc;
+}
+
+.portal-content-light [class*="from-slate-900"] {
+    background-image: linear-gradient(110deg, #bae6fd, #e0f2fe) !important;
+}
+
+.portal-content-light
+  :is(
+    [class*="text-white"],
+    [class*="text-slate-100"],
+    [class*="text-slate-200"],
+    [class*="text-slate-300"]
+  ):not(button):not(button *):not(input):not(textarea):not(select) {
+  color: #1e293b !important;
+}
+
+.portal-content-light
+  :is([class*="text-cyan-200"], [class*="text-cyan-300"], [class*="text-cyan-400"]):not(
+    button
+  ):not(button *):not(input):not(textarea):not(select) {
+  color: #0e7490 !important;
+}
+
+.portal-content-light
+  :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select) {
+  background-color: #d8eff9 !important;
+  border-color: #7dd3fc;
+  color: #0f172a !important;
+}
+
+.portal-content-light
+  :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select):focus {
+  background-color: #e6f4fa !important;
+  border-color: #0284c7;
+  outline-color: #0284c7;
+}
+
+.portal-content-light
+  :is(input:not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+  color: #64748b;
+}
+
+.portal-content-light input:-webkit-autofill,
+.portal-content-light input:-webkit-autofill:hover,
+.portal-content-light input:-webkit-autofill:focus,
+.portal-content-light input:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a !important;
+  -webkit-box-shadow: 0 0 0 1000px #d8eff9 inset !important;
+}
+
+.admin-uniform-text,
+.admin-uniform-text
+  [class*="text-"]:not(button):not(button *):not(svg):not(input):not(textarea):not(select) {
+  color: #1e3a5f !important;
+}
+
+.admin-uniform-text [role="status"],
+.admin-uniform-text [role="status"] * {
+  color: #166534 !important;
+}
+
+.admin-portal-theme {
+  background-color: #e0f2fe !important;
+  color: #000000 !important;
+}
+
+.admin-portal-theme [style*="radial-gradient"],
+.login-page-theme [style*="radial-gradient"] {
+  background: none !important;
+}
+
+.admin-portal-theme :not(.admin-portal-theme)[class*="bg-"],
+.login-page-theme [class*="bg-"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+.admin-portal-theme [class*="border-"],
+.login-page-theme [class*="border-"] {
+  border-color: #3b82f6 !important;
+}
+
+.admin-portal-theme [class*="text-"],
+.login-page-theme [class*="text-"] {
+  color: #000000 !important;
+}
+
+.admin-portal-theme button.selected-option[aria-pressed="true"],
+.login-page-theme button.selected-option[aria-pressed="true"] {
+  background-color: #dbeafe !important;
+  background-image: none !important;
+  border-color: #3b82f6 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 16%) !important;
+}
+
+.admin-portal-theme button.selected-option[aria-pressed="true"] *,
+.login-page-theme button.selected-option[aria-pressed="true"] * {
+  color: #000000 !important;
+}
+
+.admin-portal-theme .ticket-status-resolved {
+  background-color: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #166534 !important;
+  box-shadow: 0 0 10px rgb(34 197 94 / 18%) !important;
+}
+
+.admin-portal-theme .ticket-status-pending {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #92400e !important;
+  box-shadow: 0 0 10px rgb(245 158 11 / 16%) !important;
+}
+
+.admin-portal-theme .ticket-status-badge svg {
+  color: inherit !important;
+}
+
+.admin-portal-theme .destructive-action,
+.admin-portal-theme .destructive-action:hover,
+.admin-portal-theme .destructive-action:focus-visible,
+.admin-portal-theme .destructive-action:active {
+  background-color: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+  box-shadow: 0 0 12px rgb(239 68 68 / 18%) !important;
+}
+
+.admin-portal-theme .destructive-action:hover,
+.admin-portal-theme .destructive-action:focus-visible {
+  background-color: #fee2e2 !important;
+  border-color: #ef4444 !important;
+}
+
+.admin-portal-theme .destructive-action svg {
+  color: #b91c1c !important;
+}
+
+.admin-portal-theme .admin-uniform-text [class*="text-"]:not(button):not(button *):not(svg):not(
+    input
+  ):not(textarea):not(select),
+.admin-portal-theme .admin-uniform-text [role="status"],
+.admin-portal-theme .admin-uniform-text [role="status"] * {
+  color: #000000 !important;
+}
+
+.admin-portal-theme input:-webkit-autofill,
+.admin-portal-theme input:-webkit-autofill:hover,
+.admin-portal-theme input:-webkit-autofill:focus,
+.admin-portal-theme input:-webkit-autofill:active,
+.login-page-theme input:-webkit-autofill,
+.login-page-theme input:-webkit-autofill:hover,
+.login-page-theme input:-webkit-autofill:focus,
+.login-page-theme input:-webkit-autofill:active {
+  -webkit-text-fill-color: #000000 !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+}
+
+.user-support-desk {
+  background-color: #f0f9ff !important;
+  color: #000000 !important;
+}
+
+#user-support-desk-theme [class*="bg-"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+#user-support-desk-theme [class*="border-"] {
+  border-color: #3b82f6 !important;
+}
+
+#user-support-desk-theme [class*="text-"] {
+  color: #000000 !important;
+}
+
+#user-support-desk-theme .ticket-status-badge {
+  background-color: #dcfce7 !important;
+  border-color: #22c55e !important;
+  color: #166534 !important;
+  box-shadow: 0 0 10px rgb(34 197 94 / 18%) !important;
+}
+
+#user-support-desk-theme .ticket-status-badge svg {
+  color: #15803d !important;
+}
+
+#user-support-desk-theme .ticket-delete-button,
+#user-support-desk-theme .ticket-delete-button:hover,
+#user-support-desk-theme .ticket-delete-button:focus-visible,
+#user-support-desk-theme .ticket-delete-button:active {
+  background-color: #fee2e2 !important;
+  border-color: #ef4444 !important;
+  color: #b91c1c !important;
+  box-shadow: 0 0 8px rgb(239 68 68 / 18%) !important;
+}
+
+#user-support-desk-theme .ticket-delete-button:hover,
+#user-support-desk-theme .ticket-delete-button:focus-visible {
+  background-color: #fecaca !important;
+  border-color: #dc2626 !important;
+}
+
+#user-support-desk-theme .ticket-delete-button svg {
+  color: #b91c1c !important;
+}
+
+#user-support-desk-theme :is(input, textarea, select) {
+  background-color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  color: #000000 !important;
+}
+
+#user-support-desk-theme :is(input, textarea, select):focus {
+  border-color: #2563eb !important;
+  outline-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 18%) !important;
+}
+
+#user-support-desk-theme :is(input, textarea, select)::placeholder {
+  color: #64748b !important;
+}
+
+.chatbot-workspace,
+.chatbot-workspace * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chatbot-workspace::-webkit-scrollbar,
+.chatbot-workspace *::-webkit-scrollbar {
+  display: none;
 }
 
 /* Chrome Autofill Dark Background Fix */

@@ -16,7 +16,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white font-sans relative overflow-hidden select-none">
+    <div className="min-h-screen bg-sky-50 text-slate-900 font-sans relative overflow-hidden select-none">
       {/* Interactive Glowing Pointer Following Mouse */}
       <div 
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
@@ -70,11 +70,11 @@ export default function LandingPage() {
           <span className="text-xs font-bold text-cyan-300 tracking-wide uppercase">COMPANY ACCESS CONTROL SYSTEM</span>
         </div>
 
-        <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight max-w-4xl mx-auto leading-tight">
+        <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight">
           Ind Sphinx Security & <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">Identity Gateway</span>
         </h1>
 
-        <p className="mt-6 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+        <p className="mt-6 text-base sm:text-lg text-slate-700 max-w-2xl mx-auto font-medium leading-relaxed">
           Centralized security system for Ind Sphinx personnel with encrypted role authorization, portal isolation, and account credential management.
         </p>
 

@@ -91,7 +91,7 @@ export default function UserPortalPage() {
 
   if (isAuthorized !== true) {
     return (
-      <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center font-sans">
         <div className="text-cyan-400 text-sm font-bold animate-pulse flex items-center gap-2">
           <Zap className="w-5 h-5 text-cyan-300 animate-bounce" />
           Loading User Portal...
@@ -104,7 +104,7 @@ export default function UserPortalPage() {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white font-sans relative overflow-hidden flex flex-col justify-between">
+    <div className="min-h-screen bg-sky-50 text-slate-900 font-sans relative overflow-hidden flex flex-col justify-between">
       {/* Dynamic Ambient Background Glow */}
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"
@@ -171,100 +171,9 @@ export default function UserPortalPage() {
       </header>
 
       {/* Main Content Workspace */}
-      <main className="relative z-10 max-w-6xl mx-auto px-6 py-12 flex-1 flex flex-col justify-center">
-        
-        {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40 border-2 border-cyan-500/40 p-6 sm:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15)] mb-10 text-left">
-          <div className="absolute -right-10 -top-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black tracking-widest uppercase mb-3 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>USER PORTAL ACTIVE</span>
-              </div>
-
-              <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                Welcome Back,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 capitalize">
-                  {displayName}
-                </span>
-              </h1>
-
-              <div className="flex items-center gap-2 text-xs font-extrabold text-cyan-300/90 mt-2">
-                <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{currentDate}</span>
-              </div>
-            </div>
-
-            <div className="self-start md:self-center">
-              <div className="px-4 py-2.5 rounded-2xl bg-slate-950/80 border border-cyan-400/40 shadow-[0_0_15px_rgba(6,182,212,0.2)] flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
-                  <ShieldCheck size={18} />
-                </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                    SESSION STATUS
-                  </div>
-                  <div className="text-xs font-black text-cyan-300 tracking-wide">
-                    Authenticated
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* IT Helpdesk Query Submission & Live Tracker */}
-        <div className="mb-10">
+      <main className="relative z-10 mx-auto w-full max-w-[1480px] px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mx-auto w-full">
           <UserSupportDesk userName={displayName} userEmail={userEmail} />
-        </div>
-
-        {/* 3 Creative Security Cards */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          
-          {/* Card 1 */}
-          <div className="relative p-6 bg-slate-900/80 border-2 border-cyan-500/60 hover:border-cyan-300 rounded-3xl backdrop-blur-2xl transition-all duration-300 shadow-[0_0_25px_rgba(6,182,212,0.15)] hover:shadow-[0_0_35px_rgba(6,182,212,0.35)] hover:-translate-y-1.5 group">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border-2 border-cyan-400/60 flex items-center justify-center text-cyan-300 mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-              <Shield size={24} className="stroke-[2.5]" />
-            </div>
-            <h3 className="text-xs font-black text-cyan-300 uppercase tracking-widest mb-2 flex items-center justify-between">
-              <span>Human & Security</span>
-              <span className="text-[10px] text-cyan-400/60 font-mono">01</span>
-            </h3>
-            <p className="text-sm text-white leading-relaxed font-black tracking-wide bg-gradient-to-br from-white to-slate-200 bg-clip-text">
-              "Without security, human potential is vulnerable to chaos. Protection is what allows innovation to thrive."
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="relative p-6 bg-slate-900/80 border-2 border-cyan-500/60 hover:border-cyan-300 rounded-3xl backdrop-blur-2xl transition-all duration-300 shadow-[0_0_25px_rgba(6,182,212,0.15)] hover:shadow-[0_0_35px_rgba(6,182,212,0.35)] hover:-translate-y-1.5 group">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border-2 border-cyan-400/60 flex items-center justify-center text-cyan-300 mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-              <Lock size={24} className="stroke-[2.5]" />
-            </div>
-            <h3 className="text-xs font-black text-cyan-300 uppercase tracking-widest mb-2 flex items-center justify-between">
-              <span>The Core Foundation</span>
-              <span className="text-[10px] text-cyan-400/60 font-mono">02</span>
-            </h3>
-            <p className="text-sm text-white leading-relaxed font-black tracking-wide bg-gradient-to-br from-white to-slate-200 bg-clip-text">
-              "Security is not merely a feature or a rule—it is the unbreakable foundation of enterprise trust."
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="relative p-6 bg-slate-900/80 border-2 border-cyan-500/60 hover:border-cyan-300 rounded-3xl backdrop-blur-2xl transition-all duration-300 shadow-[0_0_25px_rgba(6,182,212,0.15)] hover:shadow-[0_0_35px_rgba(6,182,212,0.35)] hover:-translate-y-1.5 group">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border-2 border-cyan-400/60 flex items-center justify-center text-cyan-300 mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-              <ShieldAlert size={24} className="stroke-[2.5]" />
-            </div>
-            <h3 className="text-xs font-black text-cyan-300 uppercase tracking-widest mb-2 flex items-center justify-between">
-              <span>Digital Shield</span>
-              <span className="text-[10px] text-cyan-400/60 font-mono">03</span>
-            </h3>
-            <p className="text-sm text-white leading-relaxed font-black tracking-wide bg-gradient-to-br from-white to-slate-200 bg-clip-text">
-              "Vigilance today safeguards our intelligence, privacy, and future tomorrow."
-            </p>
-          </div>
-
         </div>
       </main>
 

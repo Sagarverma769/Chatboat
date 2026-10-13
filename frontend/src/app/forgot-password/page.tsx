@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center p-4 font-sans select-none relative overflow-hidden">
+    <div className="min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center p-4 font-sans select-none relative overflow-hidden portal-content-light">
       <BrandLogo className="fixed right-3 top-3 z-50 sm:right-6 sm:top-5" />
       {/* Dynamic Mouse Glow */}
       <div 

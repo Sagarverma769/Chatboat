@@ -1,11 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBackendApiUrl } from '@/lib/backend-api';
-import userSupportAnswers from './user-support-answers.json';
+import fs from 'fs';
+import path from 'path';
 
 type UserSupportRule = {
   triggers: string[];
   answer: string;
 };
+
+function loadKnowledgeBaseTxt(): { rules: UserSupportRule[]; fallback: string } {
+  const defaultFallback =
+    "Hello! I am your IT Support Assistant. I can help you troubleshoot:\n\n• Hardware Issues\n• Software Issues\n• Printer Issues\n• Computer Issues\n• SAP / ERP Issues\n\nPlease select one of the options above or describe what issue you are facing.";
+
+  try {
+    const txtPath = path.join(process.cwd(), 'src', 'app', 'api', 'chat', 'user-support-answers.txt');
+    if (!fs.existsSync(txtPath)) {
+      return { rules: [], fallback: defaultFallback };
+    }
+
+    const content = fs.readFileSync(txtPath, 'utf-8');
+    const lines = content.split('\n');
+    const rules: UserSupportRule[] = [];
+    let fallback = defaultFallback;
+
+    let currentType: 'NONE' | 'TRIGGERS' | 'FALLBACK' = 'NONE';
+    let inAnswer = false;
+    let currentTriggers: string[] = [];
+    let currentAnswerLines: string[] = [];
+
+    const saveCurrent = () => {
+      if (currentType === 'TRIGGERS' && currentTriggers.length > 0 && currentAnswerLines.length > 0) {
+        const answer = currentAnswerLines.join('\n').trim();
+        if (answer) {
+          rules.push({ triggers: currentTriggers, answer });
+        }
+      } else if (currentType === 'FALLBACK' && currentAnswerLines.length > 0) {
+        fallback = currentAnswerLines.join('\n').trim();
+      }
+      currentTriggers = [];
+      currentAnswerLines = [];
+      inAnswer = false;
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+
+      if (/^\[TRIGGERS\]/i.test(line)) {
+        saveCurrent();
+        currentType = 'TRIGGERS';
+        inAnswer = false;
+        continue;
+      }
+
+      if (/^\[FALLBACK\]/i.test(line)) {
+        saveCurrent();
+        currentType = 'FALLBACK';
+        inAnswer = true;
+        continue;
+      }
+
+      if (/^\[ANSWER\]/i.test(line)) {
+        inAnswer = true;
+        continue;
+      }
+
+      // Ignore comment lines or divider lines starting with # or =
+      if (/^[#=]/.test(line)) {
+        continue;
+      }
+
+      if (currentType === 'TRIGGERS') {
+        if (!inAnswer) {
+          const parts = line.split(',').map((p) => p.trim()).filter(Boolean);
+          currentTriggers.push(...parts);
+        } else {
+          currentAnswerLines.push(rawLine);
+        }
+      } else if (currentType === 'FALLBACK') {
+        currentAnswerLines.push(rawLine);
+      }
+    }
+
+    saveCurrent();
+    return { rules, fallback };
+  } catch (err) {
+    console.error("Error reading user-support-answers.txt:", err);
+    return { rules: [], fallback: defaultFallback };
+  }
+}
 
 function getNmapTarget(message: string): string | null {
   const ipv4Match = message.match(/\b(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?\b/);
@@ -29,16 +111,126 @@ function isValidNmapTarget(target: string): boolean {
     && /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(target);
 }
 
-function getUserAnswer(message: string): string {
+function getUserAnswer(message: string, history?: { sender: string; text: string }[]): string {
   // Regex cleaning ke saath normalized input
-  const cleanInput = message.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').trim();
+  let cleanInput = message.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').trim();
+
+  // Context-aware numeric input handling (e.g. user enters "1", "2", "5", etc.)
+  const numericMatch = cleanInput.match(/^(\d{1,2})$/);
+  if (numericMatch) {
+    const num = parseInt(numericMatch[1], 10);
+    // Find last bot message from history to determine category context
+    const lastBotMessage = history
+      ?.slice()
+      .reverse()
+      .find((m) => m.sender === 'bot')?.text.toLowerCase() || '';
+
+    // Check if the previous message was the Main Menu (which lists multiple categories)
+    const isMainMenu =
+      lastBotMessage.includes('category') ||
+      lastBotMessage.includes('main menu') ||
+      (lastBotMessage.includes('hardware') && lastBotMessage.includes('software'));
+
+    if (isMainMenu) {
+      const defaultMap: Record<number, string> = {
+        1: 'hardware',
+        2: 'software',
+        3: 'printer',
+        4: 'computer',
+        5: 'sap',
+      };
+      if (defaultMap[num]) cleanInput = defaultMap[num];
+    } else if (lastBotMessage.includes('power') || lastBotMessage.includes('battery')) {
+      const powerMap: Record<number, string> = {
+        1: 'laptop not turning on',
+        2: 'battery not charging issue',
+        3: 'sudden power shutdown',
+        4: 'charger adapter issue',
+        5: 'raise it support ticket',
+      };
+      if (powerMap[num]) cleanInput = powerMap[num];
+    } else if (lastBotMessage.includes('hardware')) {
+      const hardwareMap: Record<number, string> = {
+        1: 'keyboard issue',
+        2: 'monitor display issue',
+        3: 'mouse trackpad issue',
+        4: 'power battery issue',
+        5: 'overheating fan issue',
+        6: 'audio speaker mic issue',
+        7: 'storage hard drive issue',
+        8: 'ram performance issue',
+      };
+      if (hardwareMap[num]) cleanInput = hardwareMap[num];
+    } else if (lastBotMessage.includes('software')) {
+      const softwareMap: Record<number, string> = {
+        1: 'app crashing issue',
+        2: 'windows update issue',
+        3: 'slow performance issue',
+        4: 'install uninstall issue',
+        5: 'virus security issue',
+        6: 'blue screen bsod issue',
+        7: 'browser internet issue',
+        8: 'file corruption dll issue',
+        9: 'printer software issues',
+        10: 'sap erp',
+      };
+      if (softwareMap[num]) cleanInput = softwareMap[num];
+    } else if (lastBotMessage.includes('printer')) {
+      const printerMap: Record<number, string> = {
+        1: 'paper jam issue',
+        2: 'printer offline spooler issue',
+        3: 'print quality issue',
+        4: 'printer wireless driver issue',
+        5: 'stuck print queue issue',
+        6: 'cartridge toner issue',
+        7: 'scanner utility issue',
+        8: 'ip network port issue',
+      };
+      if (printerMap[num]) cleanInput = printerMap[num];
+    } else if (lastBotMessage.includes('computer')) {
+      const computerMap: Record<number, string> = {
+        1: 'computer not turning on',
+        2: 'slow computer performance',
+        3: 'computer freezing issue',
+        4: 'computer overheating issue',
+        5: 'computer blue screen bsod',
+        6: 'computer no display issue',
+        7: 'computer random reboot',
+        8: 'computer virus infection',
+      };
+      if (computerMap[num]) cleanInput = computerMap[num];
+    } else if (lastBotMessage.includes('sap') || lastBotMessage.includes('erp')) {
+      const sapMap: Record<number, string> = {
+        1: 'sap gui',
+        2: 'sap login',
+        3: 'sap connection',
+        4: 'sap authorization',
+        5: 'sap printing',
+        6: 'sap performance',
+        7: 'sap dump',
+        8: 'sap license',
+        9: 'raise it support ticket',
+      };
+      if (sapMap[num]) cleanInput = sapMap[num];
+    } else {
+      const defaultMap: Record<number, string> = {
+        1: 'hardware',
+        2: 'software',
+        3: 'printer',
+        4: 'computer',
+        5: 'sap',
+      };
+      if (defaultMap[num]) cleanInput = defaultMap[num];
+    }
+  }
+
   const words = cleanInput.split(/\s+/).filter(Boolean);
   const wordCount = words.length;
 
   // Generic single words jo lamba sentence moderate hone par list open nahi hone denge
-  const broadKeywords = ["printer", "software", "hardware"];
+  const broadKeywords = ["printer", "software", "hardware", "computer", "sap"];
 
-  const rules = userSupportAnswers.rules as UserSupportRule[];
+  const { rules, fallback } = loadKnowledgeBaseTxt();
 
   let bestMatchRule: UserSupportRule | null = null;
   let maxTriggerLength = 0;
@@ -47,9 +239,9 @@ function getUserAnswer(message: string): string {
     for (const trigger of rule.triggers) {
       const cleanTrigger = trigger.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').trim();
 
-      if (cleanTrigger === "*") continue;
+      if (!cleanTrigger || cleanTrigger === "*") continue;
 
-      // Rule 1: Agar user ne sentence likha hai (> 2 words), toh single broad word "printer" skip kar do
+      // Rule 1: Agar user ne sentence likha hai (> 2 words), toh single broad word skip kar do
       if (wordCount > 2 && broadKeywords.includes(cleanTrigger)) {
         continue;
       }
@@ -65,7 +257,7 @@ function getUserAnswer(message: string): string {
     }
   }
 
-  return bestMatchRule?.answer || userSupportAnswers.fallback;
+  return bestMatchRule?.answer || fallback;
 }
 
 export async function POST(req: NextRequest) {
@@ -79,7 +271,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Chat mode is missing. Refresh the page and try again.' }, { status: 400 });
     }
     if (role === 'user') {
-      return NextResponse.json({ response: getUserAnswer(message.trim()) });
+      return NextResponse.json({ response: getUserAnswer(message.trim(), history) });
     }
 
     const authorization = req.headers.get('authorization');

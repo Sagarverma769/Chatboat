@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 
@@ -28,7 +28,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
 
-  const fetchCurrentUser = async () => {
+  const logout = useCallback(() => {
+    localStorage.removeItem('access_token');
+    setToken(null);
+    setUser(null);
+    router.push('/login');
+  }, [router]);
+
+  const fetchCurrentUser = useCallback(async () => {
     try {
       const response = await apiClient.get<User>('/users/me');
       setUser(response.data);
@@ -37,30 +44,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('access_token');
-    if (storedToken) {
-      setToken(storedToken);
-      fetchCurrentUser();
-    } else {
-      setLoading(false);
-    }
-  }, []);
+    const initialLoad = window.setTimeout(() => {
+      const storedToken = localStorage.getItem('access_token');
+      if (storedToken) {
+        setToken(storedToken);
+        void fetchCurrentUser();
+      } else {
+        setLoading(false);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(initialLoad);
+  }, [fetchCurrentUser]);
 
   const login = async (newToken: string) => {
     localStorage.setItem('access_token', newToken);
     setToken(newToken);
     await fetchCurrentUser();
     router.push('/dashboard');
-  };
-
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    setToken(null);
-    setUser(null);
-    router.push('/login');
   };
 
   return (

@@ -40,6 +40,19 @@ export async function backendRequest(request: Request, path: string, payload?: u
         cache: "no-store",
       });
       const responseBody = upstream.status === 204 ? null : await upstream.text();
+      if (upstream.status >= 400) {
+        try {
+          JSON.parse(responseBody ?? "");
+        } catch {
+          console.error(
+            `[backend-api] Backend returned a non-JSON error response (HTTP ${upstream.status}) from ${targetUrl}.`,
+          );
+          return Response.json(
+            { detail: `Backend API returned an unreadable error response (HTTP ${upstream.status}).` },
+            { status: upstream.status },
+          );
+        }
+      }
       return new Response(responseBody, {
         status: upstream.status,
         headers: {

@@ -47,7 +47,10 @@ async def get_my_tickets(
 ):
     result = await db.execute(
         select(SupportTicket)
-        .where(SupportTicket.user_id == str(current_user.id))
+        .where(
+            SupportTicket.user_id == str(current_user.id),
+            SupportTicket.hidden_from_user.is_(False),
+        )
         .order_by(SupportTicket.created_at.desc())
     )
     return result.scalars().all()
@@ -57,7 +60,11 @@ async def get_all_tickets(
     current_admin = Depends(get_current_active_superuser),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(SupportTicket).order_by(SupportTicket.created_at.desc()))
+    result = await db.execute(
+        select(SupportTicket)
+        .where(SupportTicket.hidden_from_admin.is_(False))
+        .order_by(SupportTicket.created_at.desc())
+    )
     return result.scalars().all()
 
 @router.patch("/admin/{ticket_id}/status", response_model=TicketResponse)
@@ -92,7 +99,7 @@ async def delete_ticket(
     ticket = result.scalars().first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    await db.delete(ticket)
+    ticket.hidden_from_admin = True
     await db.commit()
 
 
@@ -106,11 +113,11 @@ async def delete_my_ticket(
         select(SupportTicket).where(
             SupportTicket.id == ticket_id,
             SupportTicket.user_id == str(current_user.id),
+            SupportTicket.hidden_from_user.is_(False),
         )
     )
     ticket = result.scalars().first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    await db.delete(ticket)
+    ticket.hidden_from_user = True
     await db.commit()
-

@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
       : detailedScan ? 90000 : 30000;
 
     const scanResult = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-      const child = spawn(process.env.NMAP_PATH || 'nmap', args, { windowsHide: true });
+      const child = spawn(/*turbopackIgnore: true*/ process.env.NMAP_PATH || 'nmap', args, { windowsHide: true });
       let settled = false;
       const timeoutHandle = setTimeout(() => {
         killProcess();

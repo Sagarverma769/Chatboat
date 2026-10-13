@@ -39,7 +39,7 @@ async def test_submit_ticket_persists_full_request_details(
 
 
 @pytest.mark.asyncio
-async def test_admin_reply_is_visible_to_owner_and_admin_can_delete(
+async def test_admin_reply_is_visible_to_owner_and_admin_delete_is_separate(
     async_client: AsyncClient,
     normal_user,
     superuser,
@@ -89,6 +89,14 @@ async def test_admin_reply_is_visible_to_owner_and_admin_can_delete(
         headers=admin_headers,
     )
     assert delete.status_code == 204
+    assert len((await async_client.get("/api/v1/tickets/me", headers=user_headers)).json()) == 1
+    assert (await async_client.get("/api/v1/tickets/admin/all", headers=admin_headers)).json() == []
+
+    user_delete = await async_client.delete(
+        f"/api/v1/tickets/{ticket_id}",
+        headers=user_headers,
+    )
+    assert user_delete.status_code == 204
     assert (await async_client.get("/api/v1/tickets/me", headers=user_headers)).json() == []
 
 
@@ -115,3 +123,5 @@ async def test_user_can_only_delete_their_own_ticket(async_client: AsyncClient, 
 
     deleted = await async_client.delete(f"/api/v1/tickets/{ticket_id}", headers=user_headers)
     assert deleted.status_code == 204
+    admin_tickets = await async_client.get("/api/v1/tickets/admin/all", headers=admin_headers)
+    assert len(admin_tickets.json()) == 1

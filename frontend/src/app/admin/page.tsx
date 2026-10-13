@@ -11,7 +11,6 @@ import {
   Inbox,
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
-import FloatingChat from "@/components/FloatingChat";
 
 // Correct Imports as per your folder structure
 import DashboardOverview from "./dashboard-overview/DashboardOverview";
@@ -126,7 +125,7 @@ export default function AdminPortalPage() {
 
   if (isAuthorized !== true) {
     return (
-      <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center font-sans">
         <div className="text-cyan-400 text-sm font-bold animate-pulse flex items-center gap-2">
           <Zap className="w-5 h-5 text-cyan-300 animate-bounce" />
           Loading Admin Workspace...
@@ -139,7 +138,7 @@ export default function AdminPortalPage() {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white font-sans relative overflow-hidden flex flex-col justify-between">
+    <div className="admin-portal-theme min-h-screen bg-sky-50 text-slate-900 font-sans relative overflow-hidden flex flex-col justify-between">
       {/* Background Glow */}
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"
@@ -216,8 +215,9 @@ export default function AdminPortalPage() {
           <nav className="space-y-2">
             <button
               type="button"
+              aria-pressed={activeTab === "dashboard"}
               onClick={() => setActiveTab("dashboard")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+              className={`selected-option w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === "dashboard"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                   : "bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-cyan-500/40"
@@ -229,8 +229,9 @@ export default function AdminPortalPage() {
 
             <button
               type="button"
+              aria-pressed={activeTab === "scanning"}
               onClick={() => setActiveTab("scanning")}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+              className={`selected-option w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === "scanning"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                   : "bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-cyan-500/40"
@@ -251,8 +252,9 @@ export default function AdminPortalPage() {
 
             <button
               type="button"
+              aria-pressed={activeTab === "users"}
               onClick={() => setActiveTab("users")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+              className={`selected-option w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === "users"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                   : "bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-cyan-500/40"
@@ -264,8 +266,9 @@ export default function AdminPortalPage() {
 
             <button
               type="button"
+              aria-pressed={activeTab === "queries"}
               onClick={() => { setActiveTab("queries"); setPendingQueriesCount(0); }}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+              className={`selected-option w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === "queries"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
                   : "bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-cyan-500/40"
@@ -314,9 +317,6 @@ export default function AdminPortalPage() {
           © {new Date().getFullYear()} Ind Sphinx Precision Ltd. All security protocols enforced.
         </p>
       </footer>
-
-      {/* Floating Chat */}
-      <FloatingChat role="admin" title="Ind Sphinx IT Assistant" />
     </div>
   );
 }

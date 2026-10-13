@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { History, MessageSquare, Trash2, ArrowLeft, X, Send, Plus } from "lucide-react";
+import Image from "next/image";
+import {
+  History,
+  MessageSquare,
+  Trash2,
+  ArrowLeft,
+  Send,
+  Plus,
+  CornerDownRight,
+} from "lucide-react";
 
 interface Message {
   sender: "user" | "bot";
@@ -25,23 +34,189 @@ function createChatSessionId(): string {
   return `session-${Date.now()}`;
 }
 
+/**
+ * Intelligent renderer for Bot Messages:
+ * - Bold actionable header
+ * - Selection menus rendered as Gemini cards with dots (NO 1 2 3 4 numbers)
+ * - Troubleshooting steps rendered with clean bullet dots (•), normal text, NO cards
+ * - Interactive follow-up options with direct ticket opening
+ */
+function BotMessageRenderer({
+  text,
+  onOptionClick,
+  onRaiseTicket,
+}: {
+  text: string;
+  onOptionClick: (opt: string) => void;
+  onRaiseTicket: () => void;
+}) {
+  // Check if text ends with follow-up question
+  const followUpRegex = /Did this resolve your issue, or would you like further assistance\?/i;
+  const followUpMatch = text.match(followUpRegex);
+  let mainBody = text;
+  let hasFollowUp = false;
+
+  if (followUpMatch && followUpMatch.index !== undefined) {
+    mainBody = text.slice(0, followUpMatch.index).trim();
+    hasFollowUp = true;
+  }
+
+  const lines = mainBody.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0) {
+    return <div className="text-slate-700 font-normal">{text}</div>;
+  }
+
+  // Determine if this is a troubleshooting solution
+  const isSolution =
+    /recommended steps|to fix|steps to|steps for/i.test(lines[0]) ||
+    lines[0].toLowerCase().startsWith("here are");
+
+  // Determine if this is an interactive menu
+  const isMenu =
+    !isSolution &&
+    (/please select|issues:|menu|choose|categories/i.test(lines[0]) ||
+      lines[0].includes("?") ||
+      lines.slice(1).some((l) =>
+        /^[•\-\*\d\.]+\s*(?:Keyboard|Monitor|Mouse|Power|Overheating|Audio|Storage|RAM|App|Windows|Slow|Install|Virus|Blue|Browser|File|Printer|SAP|Computer|Hardware|Software|Laptop|Battery|Sudden|Charger|Raise)/i.test(
+          l
+        )
+      ));
+
+  const headerLines: string[] = [];
+  const listItems: string[] = [];
+  const otherLines: string[] = [];
+
+  for (const line of lines) {
+    // Match bullet dots (•, -, *) or numbered items (1., 2., etc.)
+    const itemMatch = line.match(/^(?:[•\-\*]|\d{1,2}[\.\)])\s*(.*)$/);
+    if (itemMatch) {
+      listItems.push(itemMatch[1].trim());
+    } else if (listItems.length === 0) {
+      headerLines.push(line);
+    } else {
+      otherLines.push(line);
+    }
+  }
+
+  return (
+    <div className="space-y-3.5 select-text">
+      {/* Header Prompt - Bold and prominent */}
+      {headerLines.length > 0 && (
+        <div className="font-extrabold text-slate-900 text-[18px] sm:text-[20px] leading-snug tracking-wide">
+          {headerLines.join("\n")}
+        </div>
+      )}
+
+      {/* Selection Menu: Rendered as Gemini cards with dots (NO 1 2 3 4 numbers) */}
+      {isMenu && listItems.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          {listItems.map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => {
+                if (
+                  item.toLowerCase().includes("raise it support ticket") ||
+                  item.toLowerCase().includes("generate ticket")
+                ) {
+                  onRaiseTicket();
+                } else {
+                  onOptionClick(item);
+                }
+              }}
+              className="w-full text-left bg-white hover:bg-blue-50 active:bg-blue-100 border border-blue-300 hover:border-blue-500 text-black px-4 py-2.5 rounded-xl font-medium text-[15px] flex items-center justify-between gap-3 transition-all cursor-pointer shadow-sm group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-slate-900 shrink-0 group-hover:scale-125 transition-transform" />
+                <span className="font-semibold text-black truncate">
+                  {item}
+                </span>
+              </div>
+              <CornerDownRight className="w-4 h-4 text-blue-700 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Troubleshooting Steps: Rendered as clean bullet dots (•), normal text, NO cards */}
+      {!isMenu && listItems.length > 0 && (
+        <div className="space-y-2.5 pt-1">
+          {listItems.map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-start gap-3 text-[14.5px] text-slate-700 font-normal leading-relaxed"
+            >
+              <span className="text-cyan-400 text-lg leading-none select-none mt-0.5">•</span>
+              <span className="flex-1">{item}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Trailing descriptive text */}
+      {otherLines.length > 0 && (
+        <div className="text-sm text-slate-700 font-normal leading-relaxed pt-1 whitespace-pre-line">
+          {otherLines.join("\n")}
+        </div>
+      )}
+
+      {/* Interactive Follow-up Prompt */}
+      {hasFollowUp && (
+        <div className="mt-4 pt-3.5 border-t border-cyan-500/25">
+          <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-2.5">
+            Did this resolve your issue, or would you like further assistance?
+          </p>
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              type="button"
+              onClick={() => onOptionClick("Yes, Problem Solved")}
+              className="bg-white hover:bg-blue-50 active:bg-blue-100 text-black border border-blue-300 hover:border-blue-500 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm group"
+            >
+              <span>✅ Yes, Problem Solved</span>
+              <CornerDownRight className="w-3.5 h-3.5 text-blue-700 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onOptionClick("Still Facing Issue")}
+              className="bg-white hover:bg-blue-50 active:bg-blue-100 text-black border border-blue-300 hover:border-blue-500 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm group"
+            >
+              <span>🔄 Still Facing Issue</span>
+              <CornerDownRight className="w-3.5 h-3.5 text-blue-700 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onRaiseTicket}
+              className="bg-white hover:bg-blue-50 active:bg-blue-100 text-black border border-blue-300 hover:border-blue-500 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm group"
+            >
+              <span>📩 Raise IT Support Ticket</span>
+              <CornerDownRight className="w-3.5 h-3.5 text-blue-700 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FloatingChat({
   role = "user",
   title = "Ind Sphinx IT Assistant",
 }: FloatingChatProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(role === "user");
   const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([
     {
       id: "session-1",
-      title: "Enterprise Security Query",
-      time: "03:18 PM",
+      title: "IT Support Assistant",
+      time: "10:00 AM",
       messages: [
         {
           sender: "bot",
-          text: `Hello! I am your ${title}.\nHow can I assist with your technical or security queries today?`,
-          time: "03:18 PM",
+          text: `Please select the IT support category you need assistance with:\n\n• Hardware Issues\n• Software Issues\n• Printer Issues\n• Computer Issues\n• SAP / ERP Issues`,
+          time: "10:00 AM",
         },
       ],
     },
@@ -51,6 +226,8 @@ export default function FloatingChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
+  const displayTitle = role === "user" ? "Welcome to IT Chatboat" : title;
+  const raiseTicketLabel = role === "user" ? "RAISE CHATBOT COMPLAINT TO IT TEAM" : "RAISE IT TICKET";
 
   useEffect(() => {
     if (isOpen) {
@@ -58,9 +235,54 @@ export default function FloatingChat({
     }
   }, [activeSession?.messages, showHistory, isOpen, loading]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
   const getCurrentTime = () => {
     return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
+
+  const openChatbot = () => setIsOpen(true);
+
+  const handleRaiseTicketClick = () => {
+    if (typeof window !== "undefined") {
+      if (window.location.pathname !== "/user") {
+        window.location.href = "/user#support-ticket-desk";
+      } else {
+        const el = document.getElementById("support-ticket-desk");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          setTimeout(() => {
+            const input = document.getElementById("ticket-description-input");
+            input?.focus();
+          }, 350);
+        }
+      }
+    }
+    setIsOpen(false);
+  };
+
+  useEffect(() => {
+    const openEvent = () => setIsOpen(true);
+    window.addEventListener("chatbot:open", openEvent);
+    return () => window.removeEventListener("chatbot:open", openEvent);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   const fetchChatResponse = async (userQuery: string): Promise<string> => {
     const headers = new Headers({ "Content-Type": "application/json" });
@@ -101,8 +323,8 @@ export default function FloatingChat({
       prev.map((session) => {
         if (session.id === activeSessionId) {
           const isDefaultTitle =
-            session.title === "New Conversation" || session.title === "Enterprise Security Query";
-          const newTitle = isDefaultTitle ? query.slice(0, 20) : session.title;
+            session.title === "New Conversation" || session.title === "IT Support Assistant";
+          const newTitle = isDefaultTitle ? query.slice(0, 22) : session.title;
           return {
             ...session,
             title: newTitle,
@@ -120,17 +342,32 @@ export default function FloatingChat({
     try {
       const botResponseText = await fetchChatResponse(query);
       setSessions((prev) =>
-        prev.map((session) => session.id === activeSessionId
-          ? { ...session, messages: [...session.messages, { sender: "bot", text: botResponseText, time: getCurrentTime() }] }
-          : session
+        prev.map((session) =>
+          session.id === activeSessionId
+            ? {
+                ...session,
+                messages: [
+                  ...session.messages,
+                  { sender: "bot", text: botResponseText, time: getCurrentTime() },
+                ],
+              }
+            : session
         )
       );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "The assistant could not respond right now.";
+      const errorMessage =
+        error instanceof Error ? error.message : "The assistant could not respond right now.";
       setSessions((prev) =>
-        prev.map((session) => session.id === activeSessionId
-          ? { ...session, messages: [...session.messages, { sender: "bot", text: errorMessage, time: getCurrentTime() }] }
-          : session
+        prev.map((session) =>
+          session.id === activeSessionId
+            ? {
+                ...session,
+                messages: [
+                  ...session.messages,
+                  { sender: "bot", text: errorMessage, time: getCurrentTime() },
+                ],
+              }
+            : session
         )
       );
     } finally {
@@ -147,7 +384,7 @@ export default function FloatingChat({
       messages: [
         {
           sender: "bot",
-          text: `Hello! I am your ${title}.\nHow can I assist with your technical support today?`,
+          text: `Please select the IT support category you need assistance with:\n\n• Hardware Issues\n• Software Issues\n• Printer Issues\n• Computer Issues\n• SAP / ERP Issues`,
           time: getCurrentTime(),
         },
       ],
@@ -172,221 +409,208 @@ export default function FloatingChat({
 
   return (
     <>
-      {/* Full-Screen Immersive AI Assistant Window */}
+      {/* Full-screen support workspace */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-[#020617]/98 backdrop-blur-3xl flex flex-col text-left overflow-hidden animate-fadeIn">
-          
-          {/* Top Navigation Bar spanning full width */}
-          <div className="bg-slate-900/95 px-6 py-4 border-b border-cyan-500/30 flex items-center justify-between shrink-0 shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-slate-950 border-2 border-cyan-400/80 flex items-center justify-center font-black text-base text-cyan-300 tracking-wider shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-                AI
-              </div>
-              <div>
-                <h3 className="text-base font-black text-white tracking-wide flex items-center gap-2.5">
-                  <span>{title}</span>
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-mono font-bold">
-                    FULLSCREEN ASSISTANT
-                  </span>
-                </h3>
-                <p className="text-xs text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-2 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{role === "admin" ? "Dynamic Enterprise Admin AI" : "Employee IT Support AI Desk"}</span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-slate-400 normal-case font-medium">Ready to solve queries instantly</span>
-                </p>
-              </div>
-            </div>
+        <div className="chatbot-workspace fixed inset-0 z-50 flex h-[100dvh] w-full animate-fadeIn">
+            {/* Top Navigation Bar with Distinct Header Styling */}
+            <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-sky-50 text-left text-slate-900">
+              <div className="bg-white px-4 py-3 border-b border-sky-200 flex items-center justify-between gap-4 shrink-0 shadow-sm sm:px-6 sm:py-3.5">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                  {role === "user" && (
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-100 via-white to-blue-100 shadow-sm sm:h-14 sm:w-14">
+                      <div className="absolute inset-1 rounded-xl border border-cyan-200/70" />
+                      <Image
+                        src="/chatbot-avatar.svg"
+                        alt="Chatbot"
+                        width={56}
+                        height={56}
+                        priority
+                        className="relative h-11 w-11 object-contain sm:h-[52px] sm:w-[52px]"
+                      />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <h3 className="text-base font-black tracking-wide text-slate-900 sm:text-xl">
+                        {displayTitle}
+                      </h3>
+                      {role !== "user" && (
+                        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-mono font-bold">
+                          ASSISTANT DESK
+                        </span>
+                      )}
+                    </div>
+                    {role === "admin" && (
+                      <p className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-cyan-700 sm:text-xs">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Enterprise Admin AI</span>
+                      </p>
+                    )}
+                    {role === "user" && (
+                      <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.14em] text-black sm:text-[10px]">
+                        Designed by IT Team
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowHistory(!showHistory)}
-                className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-200 hover:text-white px-4 py-2.5 rounded-xl border border-slate-700 font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
-              >
-                <History className="w-4 h-4 text-cyan-400" />
-                <span>Chat History</span>
-                <span className="bg-cyan-500/20 text-cyan-300 text-xs px-2 py-0.5 rounded-md font-extrabold border border-cyan-500/30">
-                  {sessions.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNewChat}
-                className="text-xs bg-slate-950 hover:bg-slate-800 text-slate-200 hover:text-white px-4 py-2.5 rounded-xl border border-slate-700 font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-cyan-400" />
-                <span>New Conversation</span>
-              </button>
-
-              {/* Large, Prominent Close Cross Button */}
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="w-11 h-11 rounded-2xl bg-rose-500/15 hover:bg-rose-500/30 border-2 border-rose-500/50 hover:border-rose-400 text-rose-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-[0_0_20px_rgba(244,63,94,0.35)] active:scale-95 ml-2"
-                title="Close AI Fullscreen Window (Esc)"
-              >
-                <X className="w-6 h-6 stroke-[2.5]" />
-              </button>
-            </div>
-          </div>
-
-          {/* Body Section */}
-          {showHistory ? (
-            <div className="flex-1 overflow-y-auto p-6 max-w-4xl w-full mx-auto space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowHistory(false)}
-                  className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-2 font-black cursor-pointer"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="text-xs bg-white hover:bg-sky-100 text-slate-700 hover:text-slate-900 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+                  title="View Chat History"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Back to Chat
+                  <History className="w-4 h-4 text-cyan-400" />
+                  <span className="hidden sm:inline">History</span>
+                  <span className="bg-cyan-500/20 text-cyan-300 text-xs px-1.5 py-0.5 rounded-md font-extrabold border border-cyan-500/30">
+                    {sessions.length}
+                  </span>
                 </button>
-                <span className="text-xs text-slate-400 uppercase font-black tracking-wider">
-                  Saved Chat Conversations
-                </span>
-              </div>
 
-              {sessions.map((s) => (
-                <div
-                  key={s.id}
-                  onClick={() => {
-                    setActiveSessionId(s.id);
-                    setShowHistory(false);
-                  }}
-                  className={`p-4 rounded-2xl border-2 flex items-center justify-between cursor-pointer transition-all ${
-                    s.id === activeSessionId
-                      ? "bg-slate-900 border-cyan-400 text-white shadow-[0_0_20px_rgba(6,182,212,0.25)]"
-                      : "bg-slate-950/70 border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200 hover:border-slate-700"
-                  }`}
+                <button
+                  type="button"
+                  onClick={handleNewChat}
+                  className="text-xs bg-white hover:bg-sky-100 text-slate-700 hover:text-slate-900 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+                  title="Start New Conversation"
                 >
-                  <div className="flex items-center gap-3.5 truncate">
-                    <MessageSquare className="w-5 h-5 text-cyan-400 shrink-0" />
-                    <div className="truncate">
-                      <div className="truncate text-sm font-bold text-slate-200">{s.title}</div>
-                      <div className="text-xs text-slate-500 font-semibold">{s.time}</div>
-                    </div>
-                  </div>
+                  <Plus className="w-4 h-4 text-cyan-400" />
+                  <span className="hidden sm:inline">New Chat</span>
+                </button>
+
+              </div>
+            </div>
+
+            {/* Body Section */}
+            {showHistory ? (
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 w-full space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
                   <button
                     type="button"
-                    onClick={(e) => handleDeleteSession(s.id, e)}
-                    className="text-slate-500 hover:text-rose-400 p-2 transition-colors cursor-pointer"
-                    title="Delete Chat"
+                    onClick={() => setShowHistory(false)}
+                    className="text-sm text-cyan-700 hover:text-cyan-900 flex items-center gap-2 font-black cursor-pointer"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4" /> Back to Chat
                   </button>
+                  <span className="text-xs text-slate-600 uppercase font-black tracking-wider">
+                    Saved Chat Conversations
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col overflow-hidden max-w-5xl w-full mx-auto px-4 sm:px-8 py-4">
-              
-              {/* Quick Prompt Chips */}
-              <div className="py-2.5 flex items-center gap-2.5 overflow-x-auto shrink-0 border-b border-slate-800/80 mb-4">
-                <span className="text-xs text-slate-500 font-black uppercase shrink-0">Quick Topics:</span>
-                <button
-                  type="button"
-                  onClick={() => handleSend(undefined, "How to reset my login password?")}
-                  className="bg-slate-900/90 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 px-4 py-2 rounded-xl border border-cyan-500/30 whitespace-nowrap transition-all font-bold text-xs cursor-pointer shadow-sm active:scale-95"
-                >
-                  🔑 Password Reset Help
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSend(undefined, "Company network and Wi-Fi not working")}
-                  className="bg-slate-900/90 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 px-4 py-2 rounded-xl border border-cyan-500/30 whitespace-nowrap transition-all font-bold text-xs cursor-pointer shadow-sm active:scale-95"
-                >
-                  🌐 Network & Wi-Fi Issue
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSend(undefined, "Printer offline or paper jam")}
-                  className="bg-slate-900/90 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 px-4 py-2 rounded-xl border border-cyan-500/30 whitespace-nowrap transition-all font-bold text-xs cursor-pointer shadow-sm active:scale-95"
-                >
-                  🖨️ Printer Support
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSend(undefined, "Software crash and application installation")}
-                  className="bg-slate-900/90 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 px-4 py-2 rounded-xl border border-cyan-500/30 whitespace-nowrap transition-all font-bold text-xs cursor-pointer shadow-sm active:scale-95"
-                >
-                  💻 Software & PC Problem
-                </button>
-              </div>
 
-              {/* Chat Messages Stream - Spacious & High Readability */}
-              <div className="flex-1 overflow-y-auto space-y-6 pr-2 select-text">
-                {activeSession.messages.map((m, idx) => (
+                {sessions.map((s) => (
                   <div
-                    key={idx}
-                    className={`flex flex-col ${m.sender === "user" ? "items-end" : "items-start"}`}
+                    key={s.id}
+                    onClick={() => {
+                      setActiveSessionId(s.id);
+                      setShowHistory(false);
+                    }}
+                    className={`p-4 rounded-2xl border-2 flex items-center justify-between cursor-pointer transition-all ${
+                      s.id === activeSessionId
+                        ? "bg-sky-100 border-cyan-500 text-slate-900 shadow-sm"
+                        : "bg-white border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-slate-900 hover:border-sky-300"
+                    }`}
                   >
-                    <div
-                      className={`max-w-[80%] px-5 py-4 rounded-3xl whitespace-pre-line leading-relaxed text-[15px] select-text shadow-lg ${
-                        m.sender === "user"
-                          ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black rounded-tr-none shadow-[0_6px_25px_rgba(6,182,212,0.4)]"
-                          : "bg-slate-900/95 text-slate-100 font-semibold border-2 border-slate-800 rounded-tl-none shadow-md backdrop-blur-md"
-                      }`}
-                    >
-                      {m.text}
+                    <div className="flex items-center gap-3.5 truncate">
+                      <MessageSquare className="w-5 h-5 text-cyan-400 shrink-0" />
+                      <div className="truncate">
+                        <div className="truncate text-sm font-bold text-slate-800">{s.title}</div>
+                        <div className="text-xs text-slate-500 font-semibold">{s.time}</div>
+                      </div>
                     </div>
-                    <span className="text-xs text-slate-500 mt-1.5 font-bold px-2">
-                      {m.time}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteSession(s.id, e)}
+                      className="text-slate-500 hover:text-rose-600 p-2 transition-colors cursor-pointer"
+                      title="Delete Chat"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
-
-                {loading && (
-                  <div className="flex items-center gap-2 text-cyan-400 text-sm font-bold animate-pulse px-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-                    <span>AI Assistant is analyzing and preparing answer...</span>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
               </div>
+            ) : (
+              <div className="flex-1 flex flex-col overflow-hidden w-full">
+                {/* Chat Messages Stream - Spacious & High Readability */}
+                <div className="flex-1 overflow-y-auto space-y-2.5 px-4 sm:px-6 py-2 select-text">
+                  {activeSession.messages.map((m, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex w-full flex-col ${
+                        m.sender === "user" ? "items-end" : "items-start"
+                      }`}
+                    >
+                      <div
+                        className={`${
+                          m.sender === "bot"
+                            ? "w-full max-w-[98%]"
+                            : "max-w-[95%] sm:max-w-[90%]"
+                        } px-5 py-2.5 rounded-3xl select-text shadow-lg ${
+                          m.sender === "user"
+                            ? "bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 text-slate-950 font-black rounded-tr-none shadow-[0_4px_20px_rgba(6,182,212,0.35)] text-[15px] sm:text-[16px] leading-relaxed"
+                            : "bg-white text-slate-800 border border-sky-200 rounded-tl-none shadow-sm"
+                        }`}
+                      >
+                        {m.sender === "user" ? (
+                          <div className="whitespace-pre-line">{m.text}</div>
+                        ) : (
+                          <BotMessageRenderer
+                            text={m.text}
+                            onOptionClick={(opt) => handleSend(undefined, opt)}
+                            onRaiseTicket={handleRaiseTicketClick}
+                          />
+                        )}
+                      </div>
+                      {m.sender === "bot" && (
+                        <span className="text-xs text-slate-500 mt-1 font-bold px-2">
+                          {m.time}
+                        </span>
+                      )}
+                    </div>
+                  ))}
 
-              {/* Large Fullscreen Input Box */}
-              <form
-                onSubmit={(e) => handleSend(e)}
-                className="mt-4 p-3 bg-slate-900/90 border-2 border-cyan-500/40 rounded-2xl flex items-center gap-3 shadow-[0_0_30px_rgba(6,182,212,0.15)] shrink-0"
-              >
-                <input
-                  type="text"
-                  value={inputQuery}
-                  onChange={(e) => setInputQuery(e.target.value)}
-                  placeholder="Type your message or ask any IT problem query..."
-                  className="flex-1 bg-transparent px-4 py-3 text-base text-white placeholder-slate-400 outline-none font-semibold select-text"
-                />
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-slate-950 font-black px-6 py-3.5 rounded-xl text-sm shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
-                >
-                  <span>Send</span>
-                  <Send className="w-4 h-4 stroke-[2.5]" />
-                </button>
-              </form>
-            </div>
-          )}
+                  {loading && (
+                    <div className="flex items-center gap-2.5 text-cyan-400 text-sm font-bold animate-pulse px-2 py-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                      <span>AI Assistant is analyzing and preparing answer...</span>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input Form with Numeric & Text Support */}
+                <div className="p-3 sm:p-4 bg-white border-t border-sky-200 space-y-3 shrink-0">
+                  <form onSubmit={(e) => handleSend(e)} className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                    <input
+                      type="text"
+                      value={inputQuery}
+                      onChange={(e) => setInputQuery(e.target.value)}
+                      placeholder="Type your message or ask any IT problem..."
+                      className="min-w-[220px] flex-1 bg-sky-50 border border-sky-200 focus:border-cyan-500 rounded-xl px-4 py-3.5 text-base sm:text-lg text-slate-900 placeholder-slate-500 outline-none transition-all font-medium select-text"
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="order-2 mx-auto flex h-12 w-fit shrink-0 items-center justify-center gap-2 rounded-xl border border-blue-400 bg-white px-4 text-[11px] font-black uppercase tracking-wide text-black shadow-sm transition-all hover:bg-blue-50 hover:border-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:order-none sm:mx-0"
+                    >
+                      <span>Send</span>
+                      <Send className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                    {role === "user" && (
+                      <button
+                        type="button"
+                        onClick={handleRaiseTicketClick}
+                        className="order-3 mx-auto flex h-12 w-fit max-w-[210px] shrink-0 items-center justify-center rounded-xl border border-blue-400 bg-white px-3 text-center text-[10px] font-black uppercase leading-tight tracking-wide text-black shadow-sm transition-all hover:bg-blue-50 hover:border-blue-600 active:scale-95 cursor-pointer sm:order-none sm:mx-0 sm:text-[11px]"
+                      >
+                        {raiseTicketLabel}
+                      </button>
+                    )}
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
-
-      {/* Floating Trigger Button */}
-      <button
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(6,182,212,0.5)] border-2 border-cyan-300/60 transition-all z-50 active:scale-95"
-        title="Toggle AI Assistant"
-      >
-        {isOpen ? (
-          <X className="w-7 h-7 text-slate-950 stroke-[2.5]" />
-        ) : (
-          <div className="relative flex items-center justify-center">
-            <span className="font-black text-lg text-slate-950 tracking-tighter">AI</span>
-            <span className="absolute -top-1 -right-2 w-3 h-3 bg-emerald-400 border-2 border-slate-950 rounded-full animate-pulse" />
-          </div>
-        )}
-      </button>
     </>
   );
 }

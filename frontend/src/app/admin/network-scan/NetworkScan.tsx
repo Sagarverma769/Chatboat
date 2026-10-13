@@ -51,6 +51,7 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
 
   // View Mode
   const [showRawTerminal, setShowRawTerminal] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<"stealth" | "full" | "quick" | "udp" | null>(null);
 
   const [scanResults, setScanResults] = useState<{
     host: string;
@@ -184,6 +185,7 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
   };
 
   const applyPreset = (preset: "stealth" | "full" | "quick" | "udp") => {
+    setSelectedPreset(preset);
     if (preset === "stealth") {
       setScanType("-sS");
       setPortSelection("top-1000");
@@ -220,7 +222,7 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
   };
 
   return (
-    <div className="bg-slate-900/90 border-2 border-cyan-500/50 rounded-3xl p-6 backdrop-blur-2xl text-left space-y-6 shadow-[0_0_40px_rgba(6,182,212,0.15)]">
+    <div className="admin-uniform-text bg-slate-900/90 border-2 border-cyan-500/50 rounded-3xl p-6 backdrop-blur-2xl text-left space-y-6 shadow-[0_0_40px_rgba(6,182,212,0.15)]">
       {/* Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-500/20 pb-5">
         <div className="flex items-center gap-3">
@@ -286,29 +288,33 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
+              aria-pressed={selectedPreset === "stealth"}
               onClick={() => applyPreset("stealth")}
-              className="px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
+              className="selected-option px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
             >
               Stealth (-sS)
             </button>
             <button
               type="button"
+              aria-pressed={selectedPreset === "full"}
               onClick={() => applyPreset("full")}
-              className="px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
+              className="selected-option px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
             >
               Full (-A -p-)
             </button>
             <button
               type="button"
+              aria-pressed={selectedPreset === "quick"}
               onClick={() => applyPreset("quick")}
-              className="px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
+              className="selected-option px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
             >
               Fast Scan (-F)
             </button>
             <button
               type="button"
+              aria-pressed={selectedPreset === "udp"}
               onClick={() => applyPreset("udp")}
-              className="px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
+              className="selected-option px-2 py-1 rounded bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-300 hover:border-cyan-400 transition-all cursor-pointer"
             >
               UDP Scan (-sU)
             </button>
@@ -386,8 +392,9 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
           <button
             type="button"
+            aria-pressed={serviceVersion}
             onClick={() => setServiceVersion(!serviceVersion)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
+            className={`selected-option flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
               serviceVersion ? "bg-cyan-500/15 border-cyan-400 text-cyan-300" : "bg-slate-900 border-slate-800 text-slate-500"
             }`}
           >
@@ -397,8 +404,9 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
 
           <button
             type="button"
+            aria-pressed={osDetection}
             onClick={() => setOsDetection(!osDetection)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
+            className={`selected-option flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
               osDetection ? "bg-cyan-500/15 border-cyan-400 text-cyan-300" : "bg-slate-900 border-slate-800 text-slate-500"
             }`}
           >
@@ -408,8 +416,9 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
 
           <button
             type="button"
+            aria-pressed={noPing}
             onClick={() => setNoPing(!noPing)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
+            className={`selected-option flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
               noPing ? "bg-cyan-500/15 border-cyan-400 text-cyan-300" : "bg-slate-900 border-slate-800 text-slate-500"
             }`}
           >
@@ -419,8 +428,9 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
 
           <button
             type="button"
+            aria-pressed={defaultScripts}
             onClick={() => setDefaultScripts(!defaultScripts)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
+            className={`selected-option flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black cursor-pointer ${
               defaultScripts ? "bg-cyan-500/15 border-cyan-400 text-cyan-300" : "bg-slate-900 border-slate-800 text-slate-500"
             }`}
           >

@@ -99,8 +99,7 @@ export default function LoginPage() {
 
         setSuccessMsg('Admin Authentication Successful! Redirecting...');
         setTimeout(() => {
-          router.push('/admin');
-          setTimeout(() => { window.location.href = '/admin'; }, 300);
+          window.location.assign(new URL('/admin', window.location.origin));
         }, 1000);
       } else {
         localStorage.setItem('access_token', data.access_token);
@@ -110,11 +109,10 @@ export default function LoginPage() {
 
         setSuccessMsg('Login Successful! Redirecting to User Portal...');
         setTimeout(() => {
-          router.push('/user');
-          setTimeout(() => { window.location.href = '/user'; }, 300);
+          window.location.assign(new URL('/user', window.location.origin));
         }, 1000);
       }
-    } catch (err) {
+    } catch {
       setErrorMsg('Unable to reach the security server. Check the API connection and try again.');
     } finally {
       setIsLoading(false);
@@ -122,7 +120,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center p-4 font-sans relative overflow-hidden select-none">
+    <div className="login-page-theme min-h-screen bg-white text-black flex items-center justify-center p-4 font-sans relative overflow-hidden select-none">
       <BrandLogo className="fixed right-3 top-3 z-50 sm:right-6 sm:top-5" />
       <div 
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
@@ -144,8 +142,9 @@ export default function LoginPage() {
         <div className="grid grid-cols-2 gap-1 p-1 bg-slate-950/80 rounded-2xl border border-slate-800 my-6">
           <button
             type="button"
+            aria-pressed={activeTab === 'user'}
             onClick={() => { setActiveTab('user'); setErrorMsg(''); }}
-            className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
+            className={`selected-option py-2.5 text-xs font-bold rounded-xl transition-all ${
               activeTab === 'user' 
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]' 
                 : 'text-slate-400 hover:text-white'
@@ -155,8 +154,9 @@ export default function LoginPage() {
           </button>
           <button
             type="button"
+            aria-pressed={activeTab === 'admin'}
             onClick={() => { setActiveTab('admin'); setErrorMsg(''); }}
-            className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
+            className={`selected-option py-2.5 text-xs font-bold rounded-xl transition-all ${
               activeTab === 'admin' 
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]' 
                 : 'text-slate-400 hover:text-white'
@@ -178,7 +178,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} autoComplete="off" className="space-y-4">
+        <form method="post" onSubmit={handleLogin} autoComplete="off" className="space-y-4">
           <div>
             <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">EMAIL ADDRESS</label>
             <div className="relative">
@@ -242,7 +242,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-xs text-slate-400 font-medium">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-cyan-400 font-bold hover:underline">
             Sign Up
           </Link>

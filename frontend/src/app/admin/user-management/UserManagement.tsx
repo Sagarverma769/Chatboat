@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   Users, 
   Search, 
@@ -35,13 +36,13 @@ const PAGE_SIZE = 6;
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "user">("all");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" } | null>(null);
 
   const fetchUsers = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -81,19 +82,27 @@ export default function UserManagement() {
       console.error("Error fetching backend users:", error);
       setLoadError(error instanceof Error ? error.message : "Account service is unavailable.");
     } finally {
-      if (showLoading) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchUsers(true);
+    const initialLoad = window.setTimeout(() => void fetchUsers(true), 0);
     const intervalId = window.setInterval(() => void fetchUsers(), 10000);
-    return () => window.clearInterval(intervalId);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(intervalId);
+    };
   }, []);
 
-  const triggerToast = (msg: string) => {
-    setSuccessToast(msg);
-    setTimeout(() => setSuccessToast(null), 3500);
+  useEffect(() => {
+    if (!toast) return;
+    const timeoutId = window.setTimeout(() => setToast(null), 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
+
+  const triggerToast = (message: string, type: "success" | "danger" = "success") => {
+    setToast({ message, type });
   };
 
   // Toggle Admin Access with Visual Confirmation
@@ -119,10 +128,14 @@ export default function UserManagement() {
       triggerToast(
         newStatus
           ? `Granted Admin Access to ${userEmail}`
-          : `Revoked Admin Access for ${userEmail}`
+          : `Revoked Admin Access for ${userEmail}`,
+        newStatus ? "success" : "danger"
       );
     } catch (error) {
-      triggerToast(error instanceof Error ? error.message : "Unable to update account permissions.");
+      triggerToast(
+        error instanceof Error ? error.message : "Unable to update account permissions.",
+        "danger"
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -141,9 +154,12 @@ export default function UserManagement() {
       const data = response.status === 204 ? null : await response.json();
       if (!response.ok) throw new Error(data?.detail || "Unable to delete this account.");
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
-      triggerToast(`Account ${targetEmail} removed from system.`);
+      triggerToast(`Account ${targetEmail} removed from system.`, "danger");
     } catch (error) {
-      triggerToast(error instanceof Error ? error.message : "Unable to delete this account.");
+      triggerToast(
+        error instanceof Error ? error.message : "Unable to delete this account.",
+        "danger"
+      );
     } finally {
       setUserToDelete(null);
     }
@@ -169,15 +185,46 @@ export default function UserManagement() {
   const totalStandard = users.filter((u) => !u.isAdmin).length;
 
   return (
-    <div className="bg-slate-900/90 border-2 border-cyan-500/50 rounded-3xl p-6 backdrop-blur-2xl text-left space-y-6 shadow-[0_0_40px_rgba(6,182,212,0.15)] relative">
+    <div className="admin-uniform-text bg-slate-900/90 border-2 border-cyan-500/50 rounded-3xl p-6 backdrop-blur-2xl text-left space-y-6 shadow-[0_0_40px_rgba(6,182,212,0.15)] relative">
       
-      {/* Toast Alert */}
-      {successToast && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-950/95 border-2 border-emerald-400/80 text-emerald-200 px-5 py-3 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)] flex items-center gap-3 text-xs font-black backdrop-blur-xl animate-bounce">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>{successToast}</span>
-        </div>
-      )}
+      {toast &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              role={toast.type === "danger" ? "alert" : "status"}
+              aria-live={toast.type === "danger" ? "assertive" : "polite"}
+              className={`pointer-events-auto absolute right-4 top-4 flex w-[min(26rem,calc(100vw-2rem))] items-start gap-3 rounded-2xl border-2 px-5 py-4 text-sm font-bold backdrop-blur-xl ${
+                toast.type === "danger"
+                  ? "border-rose-500 bg-gradient-to-r from-rose-50 to-red-100 text-rose-950 shadow-[0_0_28px_rgba(244,63,94,0.48)]"
+                  : "border-emerald-500 bg-gradient-to-r from-emerald-50 to-green-100 text-emerald-950 shadow-[0_0_28px_rgba(16,185,129,0.48)]"
+              }`}
+            >
+              {toast.type === "danger" ? (
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
+              ) : (
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+              )}
+              <span className="min-w-0 flex-1 break-words">{toast.message}</span>
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                aria-label="Dismiss notification"
+                className="rounded-lg p-1 text-current/70 transition-colors hover:bg-black/5 hover:text-current"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Header Bar with Neon Glow */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-500/20 pb-5">
@@ -264,10 +311,11 @@ export default function UserManagement() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            aria-pressed={roleFilter === "all"}
             onClick={() => { setRoleFilter("all"); setCurrentPage(0); }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            className={`selected-option px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
               roleFilter === "all"
-                ? "bg-cyan-500/20 border border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                ? "bg-cyan-500/20 border border-cyan-400 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
                 : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -276,10 +324,11 @@ export default function UserManagement() {
 
           <button
             type="button"
+            aria-pressed={roleFilter === "admin"}
             onClick={() => { setRoleFilter("admin"); setCurrentPage(0); }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            className={`selected-option px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
               roleFilter === "admin"
-                ? "bg-emerald-500/20 border border-emerald-400 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                ? "bg-emerald-500/20 border border-emerald-400 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
                 : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -288,10 +337,11 @@ export default function UserManagement() {
 
           <button
             type="button"
+            aria-pressed={roleFilter === "user"}
             onClick={() => { setRoleFilter("user"); setCurrentPage(0); }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            className={`selected-option px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
               roleFilter === "user"
-                ? "bg-blue-500/20 border border-blue-400 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.3)]"
+                ? "bg-blue-500/20 border border-blue-400 text-slate-950 shadow-[0_0_12px_rgba(59,130,246,0.3)]"
                 : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -376,28 +426,36 @@ export default function UserManagement() {
                           type="button"
                           onClick={() => handleToggleAdmin(user.id, user.isAdmin, user.email)}
                           disabled={updatingId === user.id}
-                          className={`group relative inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border-2 font-black text-xs transition-all active:scale-95 cursor-pointer shadow-md ${
+                          className={`group/admin-toggle inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border-2 font-black text-xs transition-all active:scale-95 cursor-pointer shadow-md ${
                             user.isAdmin
-                              ? "bg-emerald-500/15 border-emerald-400/80 text-emerald-300 hover:bg-rose-500/20 hover:border-rose-400 hover:text-rose-300 shadow-[0_0_15px_rgba(16,185,129,0.25)]"
-                              : "bg-slate-900 border-slate-700/80 text-slate-400 hover:bg-cyan-500/15 hover:border-cyan-400 hover:text-cyan-300"
+                              ? "bg-emerald-500/15 border-emerald-400/80 text-slate-950 hover:bg-rose-500/20 hover:border-rose-400 hover:text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.25)]"
+                              : "bg-slate-900 border-slate-700/80 text-slate-950 hover:bg-cyan-500/15 hover:border-cyan-400 hover:text-slate-950"
                           }`}
+                          aria-label={user.isAdmin ? "Revoke admin access" : "Grant admin access"}
+                          aria-pressed={user.isAdmin}
                           title={user.isAdmin ? "Click to revoke Admin access" : "Click to grant Admin access"}
                         >
                           {updatingId === user.id ? (
                             <span className="animate-pulse text-cyan-300">Updating...</span>
-                          ) : user.isAdmin ? (
-                            <>
-                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse group-hover:bg-rose-400" />
-                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 group-hover:text-rose-400" />
-                              <span className="group-hover:hidden">Admin Access</span>
-                              <span className="hidden group-hover:inline text-rose-300">Revoke Admin?</span>
-                            </>
                           ) : (
                             <>
-                              <span className="w-2 h-2 rounded-full bg-slate-600 group-hover:bg-cyan-400" />
-                              <UserCheck className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400" />
-                              <span className="group-hover:hidden">Standard User</span>
-                              <span className="hidden group-hover:inline text-cyan-300">Make Admin</span>
+                              {user.isAdmin ? (
+                                <>
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                </>
+                              ) : (
+                                <>
+                                  <span className="w-2 h-2 rounded-full bg-slate-600" />
+                                  <UserCheck className="w-3.5 h-3.5 text-slate-700" />
+                                </>
+                              )}
+                              <span className="group-hover/admin-toggle:hidden group-focus-visible/admin-toggle:hidden">
+                                {user.isAdmin ? "Admin Access" : "Standard User"}
+                              </span>
+                              <span className="hidden group-hover/admin-toggle:inline group-focus-visible/admin-toggle:inline">
+                                {user.isAdmin ? "Revoke Admin Access" : "Access to Admin"}
+                              </span>
                             </>
                           )}
                         </button>
@@ -414,7 +472,8 @@ export default function UserManagement() {
                         <button
                           type="button"
                           onClick={() => setUserToDelete(user)}
-                          className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:bg-rose-500/20 hover:border-rose-500/50 hover:text-rose-400 transition-all cursor-pointer active:scale-95 shadow-sm"
+                          className="destructive-action p-2 rounded-xl border transition-all cursor-pointer active:scale-95 shadow-sm"
+                          aria-label={`Delete user ${user.name}`}
                           title="Delete User Account"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -468,53 +527,50 @@ export default function UserManagement() {
       </div>
 
       {/* Creative Delete Confirmation Modal */}
-      {userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-md bg-slate-950 border-2 border-rose-500/60 rounded-3xl p-6 space-y-5 shadow-[0_0_50px_rgba(244,63,94,0.3)]">
-            <button
-              onClick={() => setUserToDelete(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+      {userToDelete &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="admin-delete-user-title"
+              aria-describedby="admin-delete-user-description"
+              className="w-full max-w-md rounded-2xl border-2 border-rose-300 bg-white p-6 shadow-[0_12px_40px_rgba(239,68,68,0.2)]"
             >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border-2 border-rose-400/60 flex items-center justify-center text-rose-400">
-                <AlertTriangle className="w-6 h-6" />
+              <div className="mb-3 flex items-center gap-3 text-rose-700">
+                <AlertTriangle className="h-6 w-6 shrink-0" />
+                <h3 id="admin-delete-user-title" className="text-base font-black">
+                  Delete User Account?
+                </h3>
               </div>
-              <div>
-                <h3 className="text-base font-black text-white">Delete User Account</h3>
-                <p className="text-xs text-slate-400 font-semibold mt-0.5">
-                  Revoke clearance and permanently remove account
-                </p>
+              <p id="admin-delete-user-description" className="mb-5 text-sm leading-relaxed text-slate-700">
+                Are you sure you want to permanently delete this user?
+              </p>
+              <p className="mb-5 break-words text-sm font-black text-rose-700">
+                {userToDelete.name} ({userToDelete.email})
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setUserToDelete(null)}
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteUser}
+                  className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Confirm Delete</span>
+                </button>
               </div>
             </div>
-
-            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs space-y-1">
-              <p className="text-slate-300">Are you sure you want to permanently delete this user?</p>
-              <p className="text-rose-400 font-black text-sm">{userToDelete.name} ({userToDelete.email})</p>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setUserToDelete(null)}
-                className="px-4 py-2.5 text-xs font-bold bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 rounded-xl cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteUser}
-                className="px-5 py-2.5 text-xs font-black bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl shadow-[0_0_20px_rgba(244,63,94,0.4)] flex items-center gap-2 cursor-pointer active:scale-95"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Confirm Removal</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

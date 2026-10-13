@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Inbox,
   RotateCw,
@@ -8,16 +9,12 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  User,
   MapPin,
   Send,
-  Sparkles,
   Trash2,
   Check,
-  Hash,
   MessageSquare,
-  ShieldCheck,
-  X
+  ShieldCheck
 } from "lucide-react";
 
 export interface ITTicket {
@@ -38,7 +35,7 @@ export interface ITTicket {
 
 export default function AdminQueries() {
   const [tickets, setTickets] = useState<ITTicket[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [ticketLoadError, setTicketLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Resolved">("All");
@@ -49,7 +46,7 @@ export default function AdminQueries() {
 
   const [ticketToDelete, setTicketToDelete] = useState<ITTicket | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; isError: boolean } | null>(null);
 
   const fetchTickets = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -81,19 +78,22 @@ export default function AdminQueries() {
       console.error("Error fetching tickets:", error);
       setTicketLoadError(error instanceof Error ? error.message : "Ticket service is unavailable.");
     } finally {
-      if (showLoading) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchTickets(true);
+    const initialLoad = window.setTimeout(() => void fetchTickets(true), 0);
     const intervalId = window.setInterval(() => void fetchTickets(), 10000);
-    return () => window.clearInterval(intervalId);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(intervalId);
+    };
   }, []);
 
-  const triggerToast = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 3500);
+  const triggerToast = (message: string, isError = false) => {
+    setToast({ message, isError });
+    setTimeout(() => setToast(null), 3500);
   };
 
   // Reply to query and mark as Resolved
@@ -130,7 +130,7 @@ export default function AdminQueries() {
       setReplyText("");
       triggerToast(`Reply sent to ${ticket.userName || "user"} & marked as Resolved!`);
     } catch (error) {
-      triggerToast(error instanceof Error ? error.message : "Failed to update query.");
+      triggerToast(error instanceof Error ? error.message : "Failed to update query.", true);
     } finally {
       setUpdatingId(null);
     }
@@ -139,7 +139,8 @@ export default function AdminQueries() {
   // Delete ticket so other admins don't get confused
   const confirmDeleteTicket = async () => {
     if (!ticketToDelete) return;
-    const { id, userName } = ticketToDelete;
+    const { id, userName, employeeCode, deviceIp, title } = ticketToDelete;
+    const code = employeeCode || deviceIp || title || "N/A";
     setDeletingId(id);
 
     try {
@@ -155,10 +156,10 @@ export default function AdminQueries() {
       }
 
       setTickets((prev) => prev.filter((t) => t.id !== id));
-      triggerToast(`Query for ${userName || "user"} deleted.`);
+      triggerToast(`Query for ${userName || "user"} (Code: ${code}) has been deleted.`);
       setTicketToDelete(null);
     } catch (error) {
-      triggerToast(error instanceof Error ? error.message : "Failed to delete ticket.");
+      triggerToast(error instanceof Error ? error.message : "Failed to delete ticket.", true);
     } finally {
       setDeletingId(null);
     }
@@ -189,49 +190,84 @@ export default function AdminQueries() {
   const resolvedCount = tickets.filter((t) => t.status === "Resolved").length;
 
   return (
-    <div className="space-y-6 text-left">
+    <div className="space-y-6 text-left admin-uniform-text">
       {/* Toast Alert */}
-      {toastMsg && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-950/95 border-2 border-emerald-400 text-emerald-200 px-5 py-3 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)] flex items-center gap-3 text-xs font-black backdrop-blur-xl animate-bounce">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {toast &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1200,
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              role={toast.isError ? "alert" : "status"}
+              aria-live={toast.isError ? "assertive" : "polite"}
+              className={`pointer-events-auto absolute right-4 top-4 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-2xl border-2 px-5 py-3 text-xs font-black backdrop-blur-xl ${
+                toast.isError
+                  ? "bg-rose-50 text-rose-900 border-rose-400 shadow-[0_0_25px_rgba(244,63,94,0.3)]"
+                  : "bg-emerald-50 text-emerald-900 border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.3)]"
+              }`}
+            >
+              {toast.isError ? (
+                <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+              )}
+              <span>{toast.message}</span>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Delete Confirmation Modal */}
-      {ticketToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-slate-900 border-2 border-rose-500/50 p-6 shadow-[0_0_40px_rgba(244,63,94,0.3)]">
-            <div className="flex items-center gap-3 text-rose-400 mb-3">
-              <AlertTriangle className="w-6 h-6" />
-              <h3 className="text-base font-black text-white">Delete Query Record?</h3>
+      {ticketToDelete &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="admin-delete-query-title"
+              aria-describedby="admin-delete-query-description"
+              className="w-full max-w-md rounded-2xl border-2 border-rose-300 bg-white p-6 shadow-[0_12px_40px_rgba(239,68,68,0.2)]"
+            >
+              <div className="mb-3 flex items-center gap-3 text-rose-700">
+                <AlertTriangle className="h-6 w-6 shrink-0" />
+                <h3 id="admin-delete-query-title" className="text-base font-black">
+                  Delete Query Record?
+                </h3>
+              </div>
+              <p id="admin-delete-query-description" className="mb-5 text-sm leading-relaxed text-slate-700">
+                Are you sure you want to delete this query for{" "}
+                <strong className="text-slate-900">{ticketToDelete.userName}</strong> (Code:{" "}
+                {ticketToDelete.employeeCode || ticketToDelete.deviceIp || "N/A"})?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTicketToDelete(null)}
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteTicket}
+                  disabled={Boolean(deletingId)}
+                  className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {deletingId ? <RotateCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  <span>Confirm Delete</span>
+                </button>
+              </div>
             </div>
-            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-              Are you sure you want to delete this query for{" "}
-              <strong className="text-white">{ticketToDelete.userName}</strong> (Code:{" "}
-              {ticketToDelete.employeeCode || ticketToDelete.deviceIp || "N/A"})? This removes the query permanently so other admins won’t see it.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setTicketToDelete(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteTicket}
-                disabled={Boolean(deletingId)}
-                className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-lg active:scale-95"
-              >
-                {deletingId ? <RotateCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                <span>Confirm Delete</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* Main Container */}
       <div className="bg-slate-900/90 border-2 border-cyan-500/50 rounded-3xl p-6 backdrop-blur-2xl shadow-[0_0_40px_rgba(6,182,212,0.15)] space-y-6">
@@ -320,19 +356,26 @@ export default function AdminQueries() {
             <button
               key={filter}
               type="button"
+              aria-pressed={statusFilter === filter}
               onClick={() => setStatusFilter(filter)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`selected-option px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 statusFilter === filter
                   ? "bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.4)]"
                   : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-white"
               }`}
             >
               {filter}
-              {filter === "Pending" && pendingCount > 0 && (
-                <span className="ml-2 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px]">
-                  {pendingCount}
-                </span>
-              )}
+              <span
+                className={`ml-2 rounded-full px-1.5 py-0.5 text-[10px] ${
+                  filter === "Pending"
+                    ? "bg-amber-100 text-amber-800"
+                    : filter === "Resolved"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-blue-100 text-blue-800"
+                }`}
+              >
+                {filter === "All" ? totalCount : filter === "Pending" ? pendingCount : resolvedCount}
+              </span>
             </button>
           ))}
         </div>
@@ -394,11 +437,9 @@ export default function AdminQueries() {
                     <div className="flex items-center gap-2">
                       {/* Status Badge */}
                       <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border flex items-center gap-1.5 ${
-                          isResolved
-                            ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
-                            : "bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
-                        }`}
+                        className={`ticket-status-badge ${
+                          isResolved ? "ticket-status-resolved" : "ticket-status-pending"
+                        } text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border flex items-center gap-1.5`}
                       >
                         {isResolved ? (
                           <>
@@ -418,7 +459,7 @@ export default function AdminQueries() {
                         type="button"
                         onClick={() => setTicketToDelete(ticket)}
                         title="Delete query record"
-                        className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-200 transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold active:scale-95"
+                        className="destructive-action px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold active:scale-95"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Delete</span>
@@ -486,7 +527,7 @@ export default function AdminQueries() {
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-[10px] text-slate-400 font-bold uppercase mr-1">Quick Presets:</span>
                         {[
-                          "Aapki problem solve ho gayi hai",
+                          "Your issue has been resolved.",
                           "Query has been added to chatbot!",
                           "Resolved by IT Team - Thank you for feedback",
                         ].map((preset) => (
@@ -508,7 +549,7 @@ export default function AdminQueries() {
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <input
                           type="text"
-                          placeholder="Type reply message (e.g. Aapki problem solve ho gayi hai / Query added to chatbot)..."
+                          placeholder="Type your reply..."
                           value={activeReplyId === ticket.id ? replyText : ""}
                           onFocus={() => {
                             if (activeReplyId !== ticket.id) {

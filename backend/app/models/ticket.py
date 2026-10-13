@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 try:
     from db.base import Base  # when running from backend/ root
 except ImportError:
@@ -25,6 +25,8 @@ class SupportTicket(Base):
     bot_response = Column(Text, nullable=True)
     resolution_notes = Column(Text, nullable=True)
     status = Column(String, default="Pending", nullable=False)
+    hidden_from_admin = Column(Boolean, default=False, nullable=False, server_default="false")
+    hidden_from_user = Column(Boolean, default=False, nullable=False, server_default="false")
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(
         DateTime(timezone=True),
@@ -32,4 +34,3 @@ class SupportTicket(Base):
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-

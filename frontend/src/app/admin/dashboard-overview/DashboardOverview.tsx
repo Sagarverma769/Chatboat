@@ -18,7 +18,7 @@ export default function DashboardOverview({ displayName, userEmail }: DashboardO
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40 border-2 border-cyan-500/40 p-6 sm:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15)] text-left">
+      <div className="admin-uniform-text relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40 border-2 border-cyan-500/40 p-6 sm:p-8 shadow-[0_0_30px_rgba(6,182,212,0.15)] text-left">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black tracking-widest uppercase mb-3">
@@ -58,7 +58,7 @@ export default function DashboardOverview({ displayName, userEmail }: DashboardO
       </div>
 
       {/* Account Details */}
-      <div className="bg-slate-900/80 border-2 border-cyan-500/40 rounded-3xl p-6 backdrop-blur-2xl text-left">
+      <div className="admin-uniform-text bg-slate-900/80 border-2 border-cyan-500/40 rounded-3xl p-6 backdrop-blur-2xl text-left">
         <div className="text-xs font-black text-cyan-300 uppercase tracking-widest mb-4 flex items-center gap-2">
           <UserCheck className="w-4 h-4 text-cyan-400" />
           <span>ACCOUNT DETAILS</span>

@@ -1,12 +1,37 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 
+function getRegistrationError(data: unknown): string {
+  if (typeof data !== 'object' || data === null) {
+    return 'Registration failed. Please check your details and try again.';
+  }
+
+  const responseData = data as { detail?: unknown; error?: unknown };
+  if (typeof responseData.detail === 'string') return responseData.detail;
+  if (Array.isArray(responseData.detail)) {
+    const messages = responseData.detail.flatMap((item: unknown) => {
+      if (typeof item !== 'object' || item === null) return [];
+
+      const validationError = item as { loc?: unknown; msg?: unknown };
+      if (typeof validationError.msg !== 'string') return [];
+
+      const location = Array.isArray(validationError.loc)
+        ? validationError.loc.filter((part): part is string => typeof part === 'string')
+        : [];
+      const field = location.at(-1);
+      return [`${field ? `${field}: ` : ''}${validationError.msg}`];
+    });
+    if (messages.length > 0) return messages.join(' ');
+  }
+  if (typeof responseData.error === 'string') return responseData.error;
+
+  return 'Registration failed. Please check your details and try again.';
+}
+
 export default function SignUpPage() {
-  const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,6 +65,11 @@ export default function SignUpPage() {
       return;
     }
 
+    if (fullName.trim().length > 255) {
+      setErrorMsg('Full name must be 255 characters or fewer.');
+      return;
+    }
+
     const cleanEmail = email.trim().toLowerCase();
 
     // Strict Email Format Validation
@@ -50,6 +80,11 @@ export default function SignUpPage() {
 
     if (password.length < 8) {
       setErrorMsg('Password must be at least 8 characters long.');
+      return;
+    }
+
+    if (password.length > 128) {
+      setErrorMsg('Password must be 128 characters or fewer.');
       return;
     }
 
@@ -71,20 +106,17 @@ export default function SignUpPage() {
         }),
       });
 
-      const data = await response.json().catch(() => null);
+      const data: unknown = await response.json().catch(() => null);
 
       if (response.ok) {
         setSuccessMsg('Account created successfully! Redirecting to login...');
         setTimeout(() => {
-          router.push('/login');
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 300);
+          window.location.assign(new URL('/login', window.location.origin));
         }, 1000);
         return;
       }
 
-      setErrorMsg(data?.detail || data?.error || 'Registration failed. Please check your details and try again.');
+      setErrorMsg(getRegistrationError(data));
     } catch {
       setErrorMsg('Unable to reach the account server. Check the API connection and try again.');
     } finally {
@@ -93,7 +125,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center p-4 font-sans relative overflow-hidden select-none">
+    <div className="min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center p-4 font-sans relative overflow-hidden select-none portal-content-light">
       <BrandLogo className="fixed right-3 top-3 z-50 sm:right-6 sm:top-5" />
       <div 
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"

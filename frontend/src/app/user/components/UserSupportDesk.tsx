@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Send,
   CheckCircle2,
@@ -15,7 +16,7 @@ import {
   Trash2,
   Inbox,
   ShieldCheck,
-  Check
+  X
 } from "lucide-react";
 
 interface Ticket {
@@ -44,12 +45,13 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" } | null>(null);
 
   const [myTickets, setMyTickets] = useState<Ticket[]>([]);
-  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [loadingTickets, setLoadingTickets] = useState(true);
   const [ticketLoadError, setTicketLoadError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [ticketToDeleteId, setTicketToDeleteId] = useState<string | null>(null);
 
   const getActiveEmail = () => {
     if (userEmail && userEmail.trim()) return userEmail.trim().toLowerCase();
@@ -82,20 +84,29 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
       console.error("Failed to load tickets:", error);
       setTicketLoadError(error instanceof Error ? error.message : "Ticket service is unavailable.");
     } finally {
-      if (showLoading) setLoadingTickets(false);
+      setLoadingTickets(false);
     }
   };
 
   useEffect(() => {
-    void fetchMyTickets(true);
+    const initialLoad = window.setTimeout(() => void fetchMyTickets(true), 0);
     const intervalId = window.setInterval(() => void fetchMyTickets(), 6000);
-    return () => window.clearInterval(intervalId);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(intervalId);
+    };
   }, [userEmail]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timeoutId = window.setTimeout(() => setToast(null), 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!employeeName.trim() || !employeeCode.trim() || !location.trim() || !description.trim()) {
-      alert("Please fill all 3 fields and your query description.");
+      setToast({ message: "Please fill all 3 fields and your query description.", type: "danger" });
       return;
     }
 
@@ -128,20 +139,24 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Unable to submit your query.");
 
-      setSuccessToast("Query submitted successfully! IT Admin has been notified.");
+      setToast({ message: "Query submitted successfully! IT Admin has been notified.", type: "success" });
       setDescription("");
+      setEmployeeName("");
+      setEmployeeCode("");
+      setLocation("");
       await fetchMyTickets();
-      setTimeout(() => setSuccessToast(null), 4000);
     } catch (err) {
       console.error("Error submitting query:", err);
-      alert(err instanceof Error ? err.message : "Unable to submit your request.");
+      setToast({
+        message: err instanceof Error ? err.message : "Unable to submit your request.",
+        type: "danger",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this query from records?")) return;
     setDeletingId(id);
     try {
       const response = await fetch(`/api/tickets?id=${encodeURIComponent(id)}`, {
@@ -153,10 +168,12 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
         throw new Error(data.detail || "Failed to delete query.");
       }
       setMyTickets((prev) => prev.filter((t) => t.id !== id));
-      setSuccessToast("Query record deleted successfully.");
-      setTimeout(() => setSuccessToast(null), 3000);
+      setToast({ message: "Query record deleted successfully.", type: "danger" });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete query.");
+      setToast({
+        message: err instanceof Error ? err.message : "Failed to delete query.",
+        type: "danger",
+      });
     } finally {
       setDeletingId(null);
     }
@@ -169,17 +186,98 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
     description.trim().length > 0;
 
   return (
-    <div className="space-y-8 text-left">
-      {/* Toast Alert */}
-      {successToast && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-950/95 border-2 border-emerald-400 text-emerald-200 px-5 py-3 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)] flex items-center gap-3 text-xs font-black backdrop-blur-xl animate-bounce">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>{successToast}</span>
-        </div>
-      )}
+    <div
+      id="user-support-desk-theme"
+      className="user-support-desk space-y-8 rounded-3xl bg-sky-50 p-3 text-left portal-content-light sm:p-4"
+    >
+      {toast &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              role={toast.type === "danger" ? "alert" : "status"}
+              aria-live={toast.type === "danger" ? "assertive" : "polite"}
+              className={`pointer-events-auto absolute right-4 top-4 flex w-[min(26rem,calc(100vw-2rem))] items-start gap-3 rounded-2xl border-2 px-5 py-4 text-sm font-bold backdrop-blur-xl ${
+                toast.type === "danger"
+                  ? "border-rose-500 bg-gradient-to-r from-rose-50 to-red-100 text-rose-950 shadow-[0_0_28px_rgba(244,63,94,0.48)]"
+                  : "border-emerald-500 bg-gradient-to-r from-emerald-50 to-green-100 text-emerald-950 shadow-[0_0_28px_rgba(16,185,129,0.48)]"
+              }`}
+            >
+              {toast.type === "danger" ? (
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
+              ) : (
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+              )}
+              <span className="min-w-0 flex-1 break-words">{toast.message}</span>
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                aria-label="Dismiss notification"
+                className="rounded-lg p-1 text-current/70 transition-colors hover:bg-black/5 hover:text-current"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {ticketToDeleteId &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-query-title"
+              aria-describedby="delete-query-description"
+              className="w-full max-w-md rounded-2xl border-2 border-rose-300 bg-white p-6 shadow-[0_12px_40px_rgba(239,68,68,0.2)]"
+            >
+              <div className="mb-3 flex items-center gap-3 text-rose-700">
+                <AlertTriangle className="h-6 w-6 shrink-0" />
+                <h3 id="delete-query-title" className="text-base font-black">
+                  Delete Query Record?
+                </h3>
+              </div>
+              <p id="delete-query-description" className="mb-5 text-sm text-slate-700">
+                Are you sure you want to delete this query from records?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTicketToDeleteId(null)}
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!ticketToDeleteId) return;
+                    const id = ticketToDeleteId;
+                    setTicketToDeleteId(null);
+                    void handleDelete(id);
+                  }}
+                  className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Confirm Delete</span>
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Main IT Helpdesk Submission Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-slate-900/90 border-2 border-cyan-500/40 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_40px_rgba(6,182,212,0.15)]">
+      <div id="support-ticket-desk" className="relative overflow-hidden rounded-3xl bg-slate-900/90 border-2 border-cyan-500/40 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_40px_rgba(6,182,212,0.15)] scroll-mt-24">
         {/* Glow accent */}
         <div className="absolute -right-16 -top-16 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-16 -bottom-16 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -272,6 +370,7 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
             </div>
 
             <textarea
+              id="ticket-description-input"
               required
               rows={4}
               value={description}
@@ -282,29 +381,33 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
           </div>
 
           {/* Action Row */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-slate-800">
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-950/60 border border-cyan-400/50 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]"></span>
-              </span>
-              <span className="text-xs font-bold text-cyan-200 tracking-wide">
-                Query will be delivered to IT Admin dashboard in real time.
-              </span>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-3 border-t border-slate-800">
+            <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent("chatbot:open"));
+                  }
+                }}
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-cyan-500/40 font-black text-xs uppercase tracking-wider flex items-center justify-center transition-all shadow-lg cursor-pointer bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.5)] active:scale-95"
+              >
+                Back to AI
+              </button>
 
-            <button
-              type="submit"
-              disabled={submitting || !isFormValid}
-              className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all shadow-lg cursor-pointer ${
-                isFormValid && !submitting
-                  ? "bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.5)] active:scale-95"
-                  : "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
-              }`}
-            >
-              <Send className={`w-4 h-4 ${submitting ? "animate-spin" : ""}`} />
-              <span>{submitting ? "Submitting..." : "Submit Chatbot Query"}</span>
-            </button>
+              <button
+                type="submit"
+                disabled={submitting || !isFormValid}
+                className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all shadow-lg cursor-pointer ${
+                  isFormValid && !submitting
+                    ? "border border-cyan-500/40 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.5)] active:scale-95"
+                    : "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                }`}
+              >
+                <Send className={`w-4 h-4 ${submitting ? "animate-spin" : ""}`} />
+                <span>{submitting ? "Submitting..." : "Submit Chatbot Query"}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -385,7 +488,7 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-md border flex items-center gap-1.5 ${
+                        className={`ticket-status-badge text-[10px] font-black uppercase px-2.5 py-1 rounded-md border flex items-center gap-1.5 ${
                           isResolved
                             ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
                             : "bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
@@ -407,10 +510,10 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
                       {/* Delete button so user can clean up data */}
                       <button
                         type="button"
-                        onClick={() => handleDelete(ticket.id)}
+                        onClick={() => setTicketToDeleteId(ticket.id)}
                         disabled={deletingId === ticket.id}
                         title="Delete query record"
-                        className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-200 transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold active:scale-95"
+                        className="ticket-delete-button px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-200 transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold active:scale-95"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Delete</span>
