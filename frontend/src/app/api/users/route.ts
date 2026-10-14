@@ -14,7 +14,7 @@ function mapUser(user: BackendUser) {
     id: user.id,
     name: user.full_name || user.email.split("@")[0],
     email: user.email,
-    joined: user.created_at?.slice(0, 10) || "Unknown",
+    registeredAt: user.created_at || null,
     isAdmin: user.is_superuser,
     isProtected: false,
   };

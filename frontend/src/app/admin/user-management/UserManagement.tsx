@@ -26,12 +26,24 @@ interface User {
   id: string;
   name: string;
   email: string;
-  joined: string;
+  registeredAt: string | null;
   isAdmin: boolean;
   isProtected?: boolean;
 }
 
 const PAGE_SIZE = 6;
+
+function formatRegistrationTimestamp(value: string | null): string {
+  if (!value) return "Unknown";
+
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) return "Unknown";
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(timestamp);
+}
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -360,7 +372,7 @@ export default function UserManagement() {
               <tr className="bg-slate-900/90 border-b border-cyan-500/20 text-slate-400 uppercase text-[10px] font-black tracking-wider">
                 <th className="py-3.5 px-5">Employee / User</th>
                 <th className="py-3.5 px-5">Registered Email</th>
-                <th className="py-3.5 px-5">Joined Date</th>
+                <th className="py-3.5 px-5">Registration Date &amp; Time</th>
                 <th className="py-3.5 px-5 text-center">Admin Privilege Control</th>
                 <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
@@ -404,11 +416,16 @@ export default function UserManagement() {
                       </div>
                     </td>
 
-                    {/* Joined Date */}
+                    {/* Registration Date & Time */}
                     <td className="py-4 px-5 text-slate-400">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span className="font-bold text-slate-300">{user.joined}</span>
+                        <time
+                          className="font-bold text-slate-300"
+                          dateTime={user.registeredAt ?? undefined}
+                        >
+                          {formatRegistrationTimestamp(user.registeredAt)}
+                        </time>
                       </div>
                     </td>
 

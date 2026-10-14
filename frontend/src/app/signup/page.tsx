@@ -125,7 +125,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center p-4 font-sans relative overflow-hidden select-none portal-content-light">
+    <div className="company-background-page login-page-theme min-h-screen bg-transparent text-black flex items-center justify-center p-4 font-sans relative overflow-y-auto select-none">
       <BrandLogo className="fixed right-3 top-3 z-50 sm:right-6 sm:top-5" />
       <div 
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
@@ -134,31 +134,31 @@ export default function SignUpPage() {
         }}
       />
 
-      <div className="relative z-10 w-full max-w-md bg-slate-900/80 border border-slate-800/90 rounded-3xl p-8 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-        <div className="w-12 h-12 bg-slate-950 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
-          <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="relative z-10 my-8 w-full max-w-md bg-white border border-blue-200 rounded-3xl p-8 shadow-[0_12px_40px_rgba(15,23,42,0.12)]">
+        <div className="w-12 h-12 bg-white border border-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
           </svg>
         </div>
 
-        <h1 className="text-3xl font-extrabold text-center text-white tracking-tight">Create Account</h1>
-        <p className="text-slate-400 text-sm text-center mt-2 font-medium">Join our secure platform today.</p>
+        <h1 className="text-3xl font-extrabold text-center text-slate-900 tracking-tight">Create Account</h1>
+        <p className="text-slate-600 text-sm text-center mt-2 font-medium">Join our secure platform today.</p>
 
         {errorMsg && (
-          <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs text-center font-semibold">
+          <div className="login-notification mt-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs text-center font-semibold">
             {errorMsg}
           </div>
         )}
 
         {successMsg && (
-          <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-300 text-xs text-center font-semibold">
+          <div className="login-notification mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-300 text-xs text-center font-semibold">
             {successMsg}
           </div>
         )}
 
         <form onSubmit={handleSignUp} autoComplete="off" className="space-y-4 mt-6">
           <div>
-            <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">FULL NAME</label>
+            <label className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">FULL NAME</label>
             <div className="relative">
               <input
                 type="text"
@@ -167,7 +167,7 @@ export default function SignUpPage() {
                 autoComplete="off"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
+                className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
               />
               <svg className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -176,7 +176,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">EMAIL ADDRESS</label>
+            <label className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">EMAIL ADDRESS</label>
             <div className="relative">
               <input
                 type="email"
@@ -186,7 +186,7 @@ export default function SignUpPage() {
                 aria-autocomplete="none"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
+                className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
               />
               <svg className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -195,7 +195,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">PASSWORD</label>
+            <label className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">PASSWORD</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -204,7 +204,7 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 pr-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
+                className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 pr-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
               />
               <svg className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -212,7 +212,7 @@ export default function SignUpPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3.5 text-slate-500 hover:text-white transition-colors"
+                className="absolute right-3.5 top-3.5 text-slate-500 hover:text-slate-900 transition-colors"
               >
                 {showPassword ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" /></svg>
@@ -224,7 +224,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">CONFIRM PASSWORD</label>
+            <label className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">CONFIRM PASSWORD</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -233,7 +233,7 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all"
+                className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
               />
               <svg className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -250,9 +250,9 @@ export default function SignUpPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-slate-400 font-medium">
+        <div className="mt-6 text-center text-xs text-slate-600 font-medium">
           Already have an account?{' '}
-          <Link href="/login" className="text-cyan-400 font-bold hover:underline">
+          <Link href="/login" className="text-blue-700 font-bold hover:underline">
             Log In
           </Link>
         </div>

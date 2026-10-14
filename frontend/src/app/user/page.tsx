@@ -91,7 +91,7 @@ export default function UserPortalPage() {
 
   if (isAuthorized !== true) {
     return (
-      <div className="min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center font-sans">
+      <div className="company-background-page min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center font-sans">
         <div className="text-cyan-400 text-sm font-bold animate-pulse flex items-center gap-2">
           <Zap className="w-5 h-5 text-cyan-300 animate-bounce" />
           Loading User Portal...
@@ -104,7 +104,7 @@ export default function UserPortalPage() {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-sky-50 text-slate-900 font-sans relative overflow-hidden flex flex-col justify-between">
+    <div className="company-background-page min-h-screen bg-sky-50 text-slate-900 font-sans relative overflow-hidden flex flex-col justify-between">
       {/* Dynamic Ambient Background Glow */}
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"

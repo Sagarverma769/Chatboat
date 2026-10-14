@@ -120,7 +120,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page-theme min-h-screen bg-white text-black flex items-center justify-center p-4 font-sans relative overflow-hidden select-none">
+    <div className="company-background-page login-page-theme min-h-screen bg-transparent text-black flex items-center justify-center p-4 font-sans relative overflow-hidden select-none">
       <BrandLogo className="fixed right-3 top-3 z-50 sm:right-6 sm:top-5" />
       <div 
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
@@ -167,13 +167,13 @@ export default function LoginPage() {
         </div>
 
         {errorMsg && (
-          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs text-center font-semibold">
+          <div className="login-notification mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs text-center font-semibold">
             {errorMsg}
           </div>
         )}
 
         {successMsg && (
-          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-300 text-xs text-center font-semibold">
+          <div className="login-notification mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-300 text-xs text-center font-semibold">
             {successMsg}
           </div>
         )}

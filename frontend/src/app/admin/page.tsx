@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Zap,
   LayoutDashboard,
-  Activity,
   Users,
   Inbox,
 } from "lucide-react";
@@ -14,7 +13,6 @@ import BrandLogo from "@/components/BrandLogo";
 
 // Correct Imports as per your folder structure
 import DashboardOverview from "./dashboard-overview/DashboardOverview";
-import NetworkScan from "./network-scan/NetworkScan";
 import UserManagement from "./user-management/UserManagement";
 import AdminQueries from "./queries/AdminQueries";
 
@@ -27,9 +25,7 @@ export default function AdminPortalPage() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [pendingQueriesCount, setPendingQueriesCount] = useState(0);
 
-  // Tab State: "dashboard" | "scanning" | "users" | "queries"
-  const [activeTab, setActiveTab] = useState<"dashboard" | "scanning" | "users" | "queries">("dashboard");
-  const [isNmapScanning, setIsNmapScanning] = useState(false);
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "queries">("dashboard");
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -123,7 +119,7 @@ export default function AdminPortalPage() {
 
   if (isAuthorized !== true) {
     return (
-      <div className="min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center font-sans">
+      <div className="company-background-page min-h-screen bg-sky-50 text-slate-900 flex items-center justify-center font-sans">
         <div className="text-cyan-400 text-sm font-bold animate-pulse flex items-center gap-2">
           <Zap className="w-5 h-5 text-cyan-300 animate-bounce" />
           Loading Admin Workspace...
@@ -136,7 +132,7 @@ export default function AdminPortalPage() {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="admin-portal-theme min-h-screen bg-sky-50 text-slate-900 font-sans relative overflow-hidden flex flex-col justify-between">
+    <div className="company-background-page admin-portal-theme min-h-screen bg-sky-50 text-slate-900 font-sans relative overflow-hidden flex flex-col justify-between">
       {/* Background Glow */}
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"
@@ -227,29 +223,6 @@ export default function AdminPortalPage() {
 
             <button
               type="button"
-              aria-pressed={activeTab === "scanning"}
-              onClick={() => setActiveTab("scanning")}
-              className={`selected-option w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === "scanning"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                  : "bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-cyan-500/40"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Activity size={18} className={isNmapScanning ? "text-cyan-400 animate-spin" : ""} />
-                <span>Scanning Network</span>
-              </div>
-              <span className={`text-[9px] px-2 py-0.5 rounded font-mono ${
-                isNmapScanning
-                  ? "bg-amber-500/20 border border-amber-400 text-amber-300 animate-pulse font-black"
-                  : "bg-cyan-950 border border-cyan-400/50 text-cyan-300"
-              }`}>
-                {isNmapScanning ? "RUNNING..." : "NMAP"}
-              </span>
-            </button>
-
-            <button
-              type="button"
               aria-pressed={activeTab === "users"}
               onClick={() => setActiveTab("users")}
               className={`selected-option w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
@@ -289,14 +262,10 @@ export default function AdminPortalPage() {
           </nav>
         </aside>
 
-        {/* Render Active Component - Keep mounted so background tasks like Nmap scans persist */}
+        {/* Render the active admin section. */}
         <section className="lg:col-span-3 space-y-6">
           <div className={activeTab === "dashboard" ? "block space-y-6" : "hidden"}>
             <DashboardOverview displayName={displayName} userEmail={userEmail} />
-          </div>
-
-          <div className={activeTab === "scanning" ? "block space-y-6" : "hidden"}>
-            <NetworkScan onScanStateChange={setIsNmapScanning} />
           </div>
 
           <div className={activeTab === "users" ? "block space-y-6" : "hidden"}>

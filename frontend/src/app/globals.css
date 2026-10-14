@@ -18,6 +18,53 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.company-background-page {
+  isolation: isolate;
+  position: relative;
+  background-color: transparent !important;
+}
+
+.company-background-page.admin-portal-theme {
+  background-color: transparent !important;
+}
+
+.company-background-page::before {
+  position: fixed;
+  z-index: -1;
+  inset: -4%;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 52%), rgb(255 255 255 / 52%)),
+    url("/indsphinx-tools-background.jpg");
+  background-position: center;
+  background-size: cover;
+  content: "";
+  pointer-events: none;
+  animation: company-background-drift 32s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes company-background-drift {
+  from {
+    transform: scale(1.02) translate3d(-0.5%, 0.3%, 0);
+  }
+
+  to {
+    transform: scale(1.08) translate3d(0.5%, -0.3%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-background-page::before {
+    animation: none;
+    transform: scale(1.04);
+  }
+}
+
+.login-page-theme .login-notification,
+.login-page-theme .login-notification * {
+  color: #000000 !important;
+}
+
 .portal-content-light
   :is(
     [class*="bg-slate-900"],
@@ -99,7 +146,7 @@ body {
 }
 
 .admin-portal-theme :not(.admin-portal-theme)[class*="bg-"],
-.login-page-theme [class*="bg-"] {
+.login-page-theme :not(button)[class*="bg-"] {
   background-color: #ffffff !important;
   background-image: none !important;
 }
@@ -110,7 +157,7 @@ body {
 }
 
 .admin-portal-theme [class*="text-"],
-.login-page-theme [class*="text-"] {
+.login-page-theme :not(button):not(button *)[class*="text-"] {
   color: #000000 !important;
 }
 
