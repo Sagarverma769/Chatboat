@@ -90,10 +90,8 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void fetchMyTickets(true), 0);
-    const intervalId = window.setInterval(() => void fetchMyTickets(), 6000);
     return () => {
       window.clearTimeout(initialLoad);
-      window.clearInterval(intervalId);
     };
   }, [userEmail]);
 

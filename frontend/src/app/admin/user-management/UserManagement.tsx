@@ -88,10 +88,8 @@ export default function UserManagement() {
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void fetchUsers(true), 0);
-    const intervalId = window.setInterval(() => void fetchUsers(), 10000);
     return () => {
       window.clearTimeout(initialLoad);
-      window.clearInterval(intervalId);
     };
   }, []);
 

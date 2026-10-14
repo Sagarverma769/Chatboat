@@ -84,10 +84,8 @@ export default function AdminQueries() {
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void fetchTickets(true), 0);
-    const intervalId = window.setInterval(() => void fetchTickets(), 10000);
     return () => {
       window.clearTimeout(initialLoad);
-      window.clearInterval(intervalId);
     };
   }, []);
 

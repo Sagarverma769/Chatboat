@@ -90,7 +90,7 @@ export default function AdminPortalPage() {
     };
   }, []);
 
-  // Live poll pending queries count every 8 seconds
+  // Load the pending count once; ticket refreshes are user-triggered.
   useEffect(() => {
     if (!isAuthorized) return;
     const fetchPendingCount = async () => {
@@ -107,12 +107,10 @@ export default function AdminPortalPage() {
         const pending = tickets.filter((t: { status: string }) => t.status === "Pending").length;
         setPendingQueriesCount((prev) => (prev !== pending ? pending : prev));
       } catch {
-        // silently ignore polling errors
+        // Keep the portal available if the ticket count cannot be loaded.
       }
     };
     void fetchPendingCount();
-    const pollInterval = window.setInterval(() => void fetchPendingCount(), 12000);
-    return () => window.clearInterval(pollInterval);
   }, [isAuthorized]);
 
   const handleSignOut = () => {
