@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
 
 export default function LandingPage() {
+  const router = useRouter();
   const [pointer, setPointer] = useState({ x: 50, y: 50 });
 
   return (
     <div
-      className="company-background-page min-h-screen text-slate-900 font-sans relative select-none"
+      className="company-background-page landing-background min-h-screen text-slate-900 font-sans relative select-none"
       onPointerMove={(event) => {
         const bounds = event.currentTarget.getBoundingClientRect();
         setPointer({
@@ -45,19 +47,21 @@ export default function LandingPage() {
 
           <nav aria-label="Main navigation" className="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-4">
             <BrandLogo />
-            <Link
-              href="/login"
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
               className="rounded-xl border border-slate-300 bg-white/90 px-5 py-3 text-xs font-bold text-slate-800 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:shadow-md active:translate-y-0"
             >
               Sign In
-            </Link>
-            <Link
-              href="/signup"
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/signup")}
               className="group inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold text-white shadow-[0_8px_22px_rgba(37,99,235,0.25)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_12px_28px_rgba(37,99,235,0.38)] active:translate-y-0 sm:px-6"
             >
               Get Started
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
+            </button>
           </nav>
         </div>
       </header>
@@ -68,7 +72,11 @@ export default function LandingPage() {
             Ind Sphinx Precision Ltd.
           </h1>
 
-          <div className="mx-auto mt-6 flex w-fit max-w-full flex-col items-center rounded-3xl border border-white/80 bg-white/60 px-6 py-4 shadow-[0_16px_50px_rgba(15,23,42,0.1)] backdrop-blur-md sm:px-10 sm:py-5">
+          <Link
+            href="/user"
+            aria-label="Open Saarthi Chatbot"
+            className="mx-auto mt-6 flex w-fit max-w-full flex-col items-center rounded-3xl border border-white/80 bg-white/60 px-6 py-4 shadow-[0_16px_50px_rgba(15,23,42,0.1)] backdrop-blur-md transition-all hover:-translate-y-1 hover:bg-white/75 hover:shadow-[0_20px_55px_rgba(15,23,42,0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 sm:px-10 sm:py-5"
+          >
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-600/25">
               <MessageCircle className="h-6 w-6" />
             </span>
@@ -78,22 +86,32 @@ export default function LandingPage() {
             <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-600 sm:text-xs">
               Designed by the IT Team
             </p>
-          </div>
+          </Link>
+
+          <Link
+            href="/user"
+            className="group mt-5 inline-flex min-w-52 items-center justify-center gap-2 rounded-2xl border border-blue-700 bg-white px-7 py-3.5 text-sm font-extrabold text-blue-800 shadow-[0_8px_22px_rgba(15,23,42,0.12)] transition-all hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:translate-y-0"
+          >
+            Quick Access to Chatbot
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
 
           <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/signup"
+            <button
+              type="button"
+              onClick={() => router.push("/signup")}
               className="group inline-flex min-w-52 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-7 py-4 text-sm font-extrabold text-white shadow-[0_12px_30px_rgba(37,99,235,0.3)] transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:shadow-[0_18px_36px_rgba(37,99,235,0.42)] active:translate-y-0"
             >
               Create your account
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/login"
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
               className="inline-flex min-w-52 items-center justify-center rounded-2xl border border-white/90 bg-white/80 px-7 py-4 text-sm font-extrabold text-slate-900 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-lg active:translate-y-0"
             >
               Sign in to your portal
-            </Link>
+            </button>
           </div>
 
           <blockquote className="mx-auto mt-7 max-w-2xl rounded-2xl border border-white/80 bg-white/55 px-5 py-4 shadow-[0_12px_35px_rgba(15,23,42,0.08)] backdrop-blur-md sm:px-8">

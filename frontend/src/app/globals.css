@@ -33,7 +33,7 @@ body {
   z-index: -1;
   inset: -4%;
   background-image:
-    linear-gradient(rgb(255 255 255 / 52%), rgb(255 255 255 / 52%)),
+    linear-gradient(rgb(255 255 255 / 48%), rgb(255 255 255 / 48%)),
     url("/indsphinx-tools-background.jpg");
   background-position: center;
   background-size: cover;
@@ -41,6 +41,12 @@ body {
   pointer-events: none;
   animation: company-background-drift 32s ease-in-out infinite alternate;
   will-change: transform;
+}
+
+.company-background-page.landing-background::before {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 52%), rgb(255 255 255 / 52%)),
+    url("/indsphinx-tools-background.jpg");
 }
 
 @keyframes company-background-drift {

@@ -13,6 +13,7 @@ export default function UserPortalPage() {
   const [userEmail, setUserEmail] = useState("");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
@@ -22,7 +23,10 @@ export default function UserPortalPage() {
     const verifyUserSession = async () => {
       const token = localStorage.getItem("access_token");
       if (!token) {
-        router.replace("/login");
+        if (active) {
+          setIsAuthorized(true);
+          setIsLoggedIn(false);
+        }
         return;
       }
 
@@ -47,6 +51,7 @@ export default function UserPortalPage() {
           setUserEmail(verifiedEmail);
           setUserName(verifiedName);
           setIsEmailVerified(Boolean(user.is_verified));
+          setIsLoggedIn(true);
           setIsAuthorized(true);
         }
       } catch {
@@ -72,7 +77,7 @@ export default function UserPortalPage() {
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [router]);
 
   const handleSignOut = () => {
     localStorage.removeItem("access_token");
@@ -137,14 +142,24 @@ export default function UserPortalPage() {
 
             {/* Profile Menu Dropdown */}
             <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center font-black text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.5)] border-2 border-cyan-200 hover:scale-105 active:scale-95 transition-all"
-              >
-                {avatarLetter}
-              </button>
+              {isLoggedIn ? (
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center font-black text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.5)] border-2 border-cyan-200 hover:scale-105 active:scale-95 transition-all"
+                >
+                  {avatarLetter}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => router.push("/login")}
+                  className="rounded-xl border border-cyan-300 bg-slate-950/70 px-4 py-2.5 text-xs font-extrabold text-cyan-200 shadow-sm transition-colors hover:bg-slate-900"
+                >
+                  Need Login
+                </button>
+              )}
 
-              {showProfileMenu && (
+              {isLoggedIn && showProfileMenu && (
                 <div className="absolute right-0 mt-3 w-64 bg-slate-900/95 border-2 border-cyan-500/40 rounded-2xl p-4 shadow-[0_10px_35px_rgba(0,0,0,0.9)] backdrop-blur-2xl z-50">
                   <div className="pb-3 border-b border-slate-800 mb-3">
                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
@@ -173,7 +188,13 @@ export default function UserPortalPage() {
       {/* Main Content Workspace */}
       <main className="relative z-10 mx-auto w-full max-w-[1480px] px-4 py-6 sm:px-6 sm:py-8">
         <div className="mx-auto w-full">
-          <UserSupportDesk userName={displayName} userEmail={userEmail} />
+          {isLoggedIn ? (
+            <UserSupportDesk userName={displayName} userEmail={userEmail} />
+          ) : (
+            <div className="mx-auto max-w-xl rounded-2xl border border-cyan-300/40 bg-slate-950/70 p-5 text-center text-sm font-semibold text-slate-200 shadow-lg">
+              Saarthi Chatbot is ready to use. Sign in when you need to raise or track an IT support ticket.
+            </div>
+          )}
         </div>
       </main>
 
@@ -185,7 +206,12 @@ export default function UserPortalPage() {
       </footer>
 
       {/* Floating AI Support */}
-      <FloatingChat role="user" title="Ind Sphinx IT Assistant" />
+      <FloatingChat
+        role="user"
+        title="Ind Sphinx IT Assistant"
+        showProfileStatus
+        isAuthenticated={isLoggedIn}
+      />
     </div>
   );
 }

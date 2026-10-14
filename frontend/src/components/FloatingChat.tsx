@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -12,6 +14,10 @@ import {
   Send,
   Plus,
   CornerDownRight,
+  LogIn,
+  UserRound,
+  LockKeyhole,
+  ArrowRight,
 } from "lucide-react";
 
 interface Message {
@@ -30,6 +36,8 @@ interface ChatSession {
 interface FloatingChatProps {
   role?: "user" | "admin";
   title?: string;
+  showProfileStatus?: boolean;
+  isAuthenticated?: boolean;
 }
 
 const quickTopicOptions = [
@@ -228,11 +236,16 @@ function BotMessageRenderer({
 export default function FloatingChat({
   role = "user",
   title = "Saarthi",
+  showProfileStatus = false,
+  isAuthenticated = false,
 }: FloatingChatProps) {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(role === "user");
   const [showHistory, setShowHistory] = useState(false);
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
   const [chatDeletedNotice, setChatDeletedNotice] = useState(false);
+  const [showLoginRequiredNotice, setShowLoginRequiredNotice] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([
     {
@@ -285,6 +298,11 @@ export default function FloatingChat({
   const openChatbot = () => setIsOpen(true);
 
   const handleRaiseTicketClick = () => {
+    if (role === "user" && !isAuthenticated) {
+      setShowLoginRequiredNotice(true);
+      return;
+    }
+
     if (typeof window !== "undefined") {
       if (window.location.pathname !== "/user") {
         window.location.href = "/user#support-ticket-desk";
@@ -470,6 +488,52 @@ export default function FloatingChat({
         </div>
       )}
 
+      {showLoginRequiredNotice && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="animate-fadeIn fixed right-4 top-20 z-[70] w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl border border-sky-200 bg-white text-slate-900 shadow-[0_18px_55px_rgba(15,23,42,0.22)] sm:right-6 sm:top-24"
+        >
+          <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500" />
+          <div className="flex items-start gap-3 p-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700 ring-1 ring-amber-200">
+              <LockKeyhole className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-700">
+                    Saarthi access
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-slate-900">
+                    Sign in to raise a ticket
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLoginRequiredNotice(false)}
+                  aria-label="Dismiss login required message"
+                  className="-mr-1 -mt-1 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                You can keep chatting, but please login to raise a complaint.
+              </p>
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-extrabold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              >
+                Log in to continue
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Full-screen support workspace */}
       {isOpen && (
         <div className="chatbot-workspace fixed inset-0 z-50 flex h-[100dvh] w-full animate-fadeIn">
@@ -516,6 +580,26 @@ export default function FloatingChat({
                 </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
+                {showProfileStatus && !authLoading && (
+                  user ? (
+                    <div
+                      className="flex max-w-44 items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-bold text-slate-700"
+                      title={user.email}
+                    >
+                      <UserRound className="h-4 w-4 shrink-0 text-blue-600" />
+                      <span className="truncate">{user.full_name || user.email}</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => router.push("/login")}
+                      className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-blue-700 shadow-sm transition-colors hover:border-blue-400 hover:bg-blue-50"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      <span>Need Login</span>
+                    </button>
+                  )
+                )}
                 <button
                   type="button"
                   onClick={() => setShowHistory(!showHistory)}
