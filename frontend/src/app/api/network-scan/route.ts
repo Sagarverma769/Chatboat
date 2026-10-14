@@ -76,13 +76,6 @@ export async function POST(req: NextRequest) {
     const realScanEnabled = process.env.NEXT_PUBLIC_ENABLE_REAL_SCAN === 'true';
     const isProduction = process.env.NODE_ENV === 'production';
 
-    if (process.env.VERCEL === '1') {
-      return NextResponse.json({
-        success: false,
-        error: 'Vercel cannot scan private LAN devices or run a scanner inside your network. Deploy an authenticated scanner agent on the target network and connect this app to it.',
-      }, { status: 503 });
-    }
-
     if (isProduction && !realScanEnabled) {
       return NextResponse.json({
         success: false,

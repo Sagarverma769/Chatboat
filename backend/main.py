@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -13,7 +12,7 @@ from api.v1.api import api_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     validate_production_settings()
-    is_production = settings.ENVIRONMENT.lower() in {"production", "prod"} or os.getenv("VERCEL") == "1"
+    is_production = settings.ENVIRONMENT.lower() in {"production", "prod"}
     if not is_production:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)

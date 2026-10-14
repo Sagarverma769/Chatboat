@@ -1,4 +1,3 @@
-import os
 from typing import List, Optional
 
 from pydantic import ConfigDict
@@ -60,9 +59,8 @@ def get_sync_database_uri() -> str:
 
 
 def validate_production_settings() -> None:
-    is_vercel = os.getenv("VERCEL") == "1"
     is_production = settings.ENVIRONMENT.lower() in {"production", "prod"}
-    if not is_vercel and not is_production:
+    if not is_production:
         return
 
     if not (settings.DATABASE_URL or settings.ASYNC_DATABASE_URI or settings.SQLALCHEMY_DATABASE_URI):
