@@ -22,6 +22,8 @@ async def test_submit_ticket_persists_full_request_details(
             "title": "Wi-Fi keeps disconnecting",
             "description": "The workstation drops off the network every few minutes.",
             "device_ip": "192.168.10.45",
+            "employee_name": "Forged Name",
+            "employee_code": "FORGED-CODE",
         },
     )
 

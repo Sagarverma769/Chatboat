@@ -40,6 +40,8 @@ export default function SignUpPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -109,14 +111,69 @@ export default function SignUpPage() {
       const data: unknown = await response.json().catch(() => null);
 
       if (response.ok) {
-        setSuccessMsg('Account created successfully! Redirecting to login...');
-        setTimeout(() => {
-          window.location.assign(new URL('/login', window.location.origin));
-        }, 1000);
+        setPendingVerification(true);
+        setSuccessMsg('A verification code was sent to your email. Enter it below to create your account.');
         return;
       }
 
       setErrorMsg(getRegistrationError(data));
+    } catch {
+      setErrorMsg('Unable to reach the account server. Check the API connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyRegistration = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    if (!/^\d{6}$/.test(verificationCode)) {
+      setErrorMsg('Enter the 6-digit verification code from your email.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/verify-registration-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          otp: verificationCode,
+        }),
+      });
+      const data: unknown = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setErrorMsg(getRegistrationError(data));
+        return;
+      }
+
+      if (
+        typeof data !== 'object'
+        || data === null
+        || !('access_token' in data)
+        || typeof data.access_token !== 'string'
+        || !data.access_token
+      ) {
+        setErrorMsg('The security server returned an invalid registration response.');
+        return;
+      }
+
+      const result = data as {
+        access_token: string;
+        user?: { email?: string; name?: string; role?: string };
+      };
+      localStorage.setItem('access_token', result.access_token);
+      localStorage.setItem('userEmail', result.user?.email || email.trim().toLowerCase());
+      localStorage.setItem('userRole', result.user?.role || 'user');
+      localStorage.setItem('userName', result.user?.name || fullName.trim());
+      setSuccessMsg('Email verified and account created. Redirecting...');
+      setTimeout(() => {
+        window.location.assign(new URL('/user', window.location.origin));
+      }, 1000);
     } catch {
       setErrorMsg('Unable to reach the account server. Check the API connection and try again.');
     } finally {
@@ -156,8 +213,8 @@ export default function SignUpPage() {
           </div>
         )}
 
-        <form onSubmit={handleSignUp} autoComplete="off" className="space-y-4 mt-6">
-          <div>
+        <form onSubmit={pendingVerification ? handleVerifyRegistration : handleSignUp} autoComplete="off" className="space-y-4 mt-6">
+          <div className={pendingVerification ? 'hidden' : ''}>
             <label className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">FULL NAME</label>
             <div className="relative">
               <input
@@ -167,6 +224,7 @@ export default function SignUpPage() {
                 autoComplete="off"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                disabled={pendingVerification}
                 className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
               />
               <svg className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,6 +244,7 @@ export default function SignUpPage() {
                 aria-autocomplete="none"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                readOnly={pendingVerification}
                 className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
               />
               <svg className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,7 +253,7 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <div>
+          <div className={pendingVerification ? 'hidden' : ''}>
             <label className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">PASSWORD</label>
             <div className="relative">
               <input
@@ -202,6 +261,7 @@ export default function SignUpPage() {
                 required
                 name="user_signup_password"
                 autoComplete="new-password"
+                disabled={pendingVerification}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 pr-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
@@ -223,7 +283,7 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <div>
+          <div className={pendingVerification ? 'hidden' : ''}>
             <label className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">CONFIRM PASSWORD</label>
             <div className="relative">
               <input
@@ -231,6 +291,7 @@ export default function SignUpPage() {
                 required
                 name="user_signup_confirm_password"
                 autoComplete="new-password"
+                disabled={pendingVerification}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
@@ -241,12 +302,31 @@ export default function SignUpPage() {
             </div>
           </div>
 
+          {pendingVerification && (
+            <div>
+              <label htmlFor="registration-otp" className="block text-xs font-semibold tracking-wider text-slate-700 uppercase mb-2">
+                EMAIL VERIFICATION CODE
+              </label>
+              <input
+                id="registration-otp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="w-full bg-white border border-blue-200 rounded-xl px-4 py-3.5 text-center text-lg tracking-[0.5em] text-slate-900 focus:outline-none focus:border-blue-600 transition-all"
+              />
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
             className="w-full py-4 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 rounded-xl font-bold text-base text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] active:scale-[0.99] transition-all disabled:opacity-50 mt-4"
           >
-            {isLoading ? 'Checking Email & Registering...' : 'Sign Up'}
+            {isLoading ? 'Please wait...' : pendingVerification ? 'Verify Email & Create Account' : 'Sign Up'}
           </button>
         </form>
 

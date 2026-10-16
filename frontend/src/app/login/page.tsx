@@ -5,6 +5,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 
+type LoginResponse = {
+  mfa_required?: boolean;
+  access_token?: string;
+  detail?: string;
+  error?: string;
+  is_verified?: boolean;
+  requiresVerification?: boolean;
+  user?: {
+    name?: string;
+    role?: string;
+    is_superuser?: boolean;
+  };
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
@@ -14,6 +28,8 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingMfa, setPendingMfa] = useState(false);
+  const [otp, setOtp] = useState('');
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -23,6 +39,40 @@ export default function LoginPage() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  const completeLogin = (data: LoginResponse, cleanEmail: string) => {
+    if (typeof data.access_token !== 'string' || !data.access_token) {
+      setErrorMsg('The security server returned an invalid login response.');
+      return;
+    }
+
+    const user = data.user || {};
+    const userRole = user.role || 'user';
+    const userName = user.name || cleanEmail.split('@')[0];
+    const isAdminAccount = user.is_superuser === true;
+
+    if (activeTab === 'admin' && !isAdminAccount) {
+      setErrorMsg('Access Denied: This account does not have Admin privileges.');
+      return;
+    }
+
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('userEmail', cleanEmail);
+    localStorage.setItem('userRole', activeTab === 'admin' ? 'admin' : userRole);
+    localStorage.setItem('userName', userName);
+
+    if (activeTab === 'admin') {
+      setSuccessMsg('Admin Authentication Successful! Redirecting...');
+      setTimeout(() => {
+        window.location.assign(new URL('/admin', window.location.origin));
+      }, 1000);
+    } else {
+      setSuccessMsg('Login Successful! Redirecting to User Portal...');
+      setTimeout(() => {
+        window.location.assign(new URL('/user', window.location.origin));
+      }, 1000);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +97,7 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await response.json().catch(() => null);
+      const data: LoginResponse | null = await response.json().catch(() => null);
 
       if (!response.ok) {
         // ENFORCED SECURITY: Redirect if email is not verified yet
@@ -59,59 +109,52 @@ export default function LoginPage() {
           return;
         }
 
-        const detail = data?.detail || 'Incorrect email or password. Please try again.';
+        const detail = data?.detail || data?.error || 'Incorrect email or password. Please try again.';
         setErrorMsg(detail);
         setIsLoading(false);
         return;
       }
 
-      if (typeof data?.access_token !== 'string' || !data.access_token) {
-        setErrorMsg('The security server returned an invalid login response.');
-        setIsLoading(false);
+      if (data?.mfa_required) {
+        setPendingMfa(true);
+        setSuccessMsg('A verification code was sent to your email. Enter it below to finish logging in.');
         return;
       }
 
-      // Check if user object flags account as unverified
-      const user = data.user || {};
-      if (user.is_verified === false) {
-        setErrorMsg('Your email is not verified. Redirecting to verification page...');
-        setTimeout(() => {
-          router.push(`/verify?email=${encodeURIComponent(cleanEmail)}`);
-        }, 1500);
+      completeLogin(data || {}, cleanEmail);
+    } catch {
+      setErrorMsg('Unable to reach the security server. Check the API connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!/^\d{6}$/.test(otp)) {
+      setErrorMsg('Enter the 6-digit verification code from your email.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, otp }),
+      });
+      const data: LoginResponse | null = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setErrorMsg(data?.detail || data?.error || 'The verification code could not be accepted.');
         return;
       }
 
-      const userRole = user.role || 'user';
-      const userName = user.name || cleanEmail.split('@')[0];
-      const isAdminAccount = user.is_superuser === true;
-
-      if (activeTab === 'admin') {
-        if (!isAdminAccount) {
-          setErrorMsg('Access Denied: This account does not have Admin privileges.');
-          setIsLoading(false);
-          return;
-        }
-
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('userEmail', cleanEmail);
-        localStorage.setItem('userRole', 'admin');
-        localStorage.setItem('userName', userName);
-
-        setSuccessMsg('Admin Authentication Successful! Redirecting...');
-        setTimeout(() => {
-          window.location.assign(new URL('/admin', window.location.origin));
-        }, 1000);
-      } else {
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('userEmail', cleanEmail);
-        localStorage.setItem('userRole', userRole);
-        localStorage.setItem('userName', userName);
-
-        setSuccessMsg('Login Successful! Redirecting to User Portal...');
-        setTimeout(() => {
-          window.location.assign(new URL('/user', window.location.origin));
-        }, 1000);
-      }
+      completeLogin(data || {}, cleanEmail);
     } catch {
       setErrorMsg('Unable to reach the security server. Check the API connection and try again.');
     } finally {
@@ -178,7 +221,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form method="post" onSubmit={handleLogin} autoComplete="off" className="space-y-4">
+        <form method="post" onSubmit={pendingMfa ? handleVerifyOTP : handleLogin} autoComplete="off" className="space-y-4">
           <div>
             <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">EMAIL ADDRESS</label>
             <div className="relative">
@@ -190,6 +233,7 @@ export default function LoginPage() {
                 aria-autocomplete="none"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                readOnly={pendingMfa}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all [&:-webkit-autofill]:[-webkit-text-fill-color:white] [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#020617_inset]"
               />
               <svg className="w-5 h-5 text-slate-500 absolute left-3.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +242,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div>
+          <div className={pendingMfa ? 'hidden' : ''}>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase">PASSWORD</label>
               <Link href="/forgot-password" className="text-xs font-bold text-cyan-400 hover:underline">
@@ -211,6 +255,7 @@ export default function LoginPage() {
                 required
                 name="app_user_login_secret"
                 autoComplete="new-password"
+                disabled={pendingMfa}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 pr-11 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all [&:-webkit-autofill]:[-webkit-text-fill-color:white] [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#020617_inset]"
@@ -232,12 +277,38 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {pendingMfa && (
+            <div>
+              <label htmlFor="login-otp" className="block text-xs font-semibold tracking-wider text-slate-300 uppercase mb-2">
+                EMAIL VERIFICATION CODE
+              </label>
+              <input
+                id="login-otp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 text-center text-lg tracking-[0.5em] text-white focus:outline-none focus:border-cyan-500 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => { setPendingMfa(false); setOtp(''); setSuccessMsg(''); setErrorMsg(''); }}
+                className="mt-3 text-xs font-bold text-cyan-400 hover:underline"
+              >
+                Use a different account
+              </button>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
             className="w-full py-4 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 rounded-xl font-bold text-base text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] active:scale-[0.99] transition-all disabled:opacity-50 mt-4"
           >
-            {isLoading ? 'Authenticating...' : 'Log In'}
+            {isLoading ? 'Authenticating...' : pendingMfa ? 'Verify Code' : 'Log In'}
           </button>
         </form>
 

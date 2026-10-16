@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { formatLocalDateTime } from "@/lib/date-time";
 import {
   Send,
   CheckCircle2,
   Clock,
   AlertTriangle,
   User,
-  Hash,
+  Mail,
   MapPin,
   MessageSquare,
   Sparkles,
@@ -25,8 +26,6 @@ interface Ticket {
   location: string;
   userName: string;
   userEmail: string;
-  employeeCode?: string;
-  deviceIp?: string;
   title: string;
   description: string;
   status: "Pending" | "In Progress" | "Remote Connected" | "Resolved";
@@ -40,8 +39,6 @@ interface UserSupportDeskProps {
 }
 
 export default function UserSupportDesk({ userName, userEmail }: UserSupportDeskProps) {
-  const [employeeName, setEmployeeName] = useState("");
-  const [employeeCode, setEmployeeCode] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -103,23 +100,17 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!employeeName.trim() || !employeeCode.trim() || !location.trim() || !description.trim()) {
-      setToast({ message: "Please fill all 3 fields and your query description.", type: "danger" });
+    if (!location.trim() || !description.trim()) {
+      setToast({ message: "Please enter your location and query description.", type: "danger" });
       return;
     }
 
     setSubmitting(true);
-    const activeEmail = getActiveEmail();
 
     try {
       const payload = {
-        employeeName: employeeName.trim(),
-        employeeCode: employeeCode.trim(),
         location: location.trim(),
         description: description.trim(),
-        userName: employeeName.trim(),
-        userEmail: activeEmail,
-        title: employeeCode.trim(),
         unit: "General",
         category: "Chatbot",
         priority: "Medium",
@@ -139,8 +130,6 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
 
       setToast({ message: "Query submitted successfully! IT Admin has been notified.", type: "success" });
       setDescription("");
-      setEmployeeName("");
-      setEmployeeCode("");
       setLocation("");
       await fetchMyTickets();
     } catch (err) {
@@ -178,8 +167,6 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
   };
 
   const isFormValid =
-    employeeName.trim().length > 0 &&
-    employeeCode.trim().length > 0 &&
     location.trim().length > 0 &&
     description.trim().length > 0;
 
@@ -306,43 +293,36 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* 1. Employee Name */}
             <div>
               <label className="flex items-center gap-1.5 text-[11px] font-black uppercase text-cyan-300 mb-2">
                 <User className="w-3.5 h-3.5 text-cyan-400" />
-                <span>1. Employee Name *</span>
+                <span>Your Name</span>
               </label>
               <input
                 type="text"
-                required
-                value={employeeName}
-                onChange={(e) => setEmployeeName(e.target.value)}
-                placeholder=""
-                className="w-full bg-slate-950/80 border border-cyan-500/40 focus:border-cyan-400 text-white rounded-xl px-4 py-3 text-xs font-bold outline-none transition-all shadow-inner focus:ring-2 focus:ring-cyan-500/20"
+                value={userName}
+                readOnly
+                className="w-full bg-slate-800/80 border border-slate-700 text-slate-300 rounded-xl px-4 py-3 text-xs font-bold outline-none"
               />
             </div>
 
-            {/* 2. Employee Code */}
             <div>
               <label className="flex items-center gap-1.5 text-[11px] font-black uppercase text-cyan-300 mb-2">
-                <Hash className="w-3.5 h-3.5 text-cyan-400" />
-                <span>2. Employee Code *</span>
+                <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Your Email</span>
               </label>
               <input
-                type="text"
-                required
-                value={employeeCode}
-                onChange={(e) => setEmployeeCode(e.target.value)}
-                placeholder=""
-                className="w-full bg-slate-950/80 border border-cyan-500/40 focus:border-cyan-400 text-white rounded-xl px-4 py-3 text-xs font-bold outline-none transition-all shadow-inner focus:ring-2 focus:ring-cyan-500/20"
+                type="email"
+                value={getActiveEmail()}
+                readOnly
+                className="w-full bg-slate-800/80 border border-slate-700 text-slate-300 rounded-xl px-4 py-3 text-xs font-bold outline-none"
               />
             </div>
 
-            {/* 3. Location / Room */}
             <div>
               <label className="flex items-center gap-1.5 text-[11px] font-black uppercase text-cyan-300 mb-2">
                 <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                <span>3. Location / Room *</span>
+                <span>Location / Room *</span>
               </label>
               <input
                 type="text"
@@ -456,7 +436,6 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
           <div className="space-y-4">
             {myTickets.map((ticket) => {
               const isResolved = ticket.status === "Resolved";
-              const empCode = ticket.employeeCode || ticket.deviceIp || ticket.title || "N/A";
               return (
                 <div
                   key={ticket.id}
@@ -474,8 +453,9 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
                         {ticket.userName}
                       </span>
                       <span className="text-slate-600">•</span>
-                      <span className="font-mono text-cyan-300 bg-cyan-950/90 border border-cyan-500/40 px-2 py-0.5 rounded text-[11px] font-bold">
-                        CODE: {empCode}
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Mail className="w-3.5 h-3.5 text-slate-500" />
+                        {ticket.userEmail}
                       </span>
                       <span className="text-slate-600">•</span>
                       <span className="text-slate-400 flex items-center gap-1">
@@ -544,7 +524,7 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
 
                   {/* Date footer */}
                   <div className="mt-2 text-[10px] text-slate-500 font-mono">
-                    Submitted: {new Date(ticket.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                    Submitted: {formatLocalDateTime(ticket.createdAt)}
                   </div>
                 </div>
               );

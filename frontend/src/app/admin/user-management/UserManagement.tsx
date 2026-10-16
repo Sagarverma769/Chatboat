@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { formatLocalDateTime } from "@/lib/date-time";
 import { 
   Users, 
   Search, 
@@ -32,18 +33,6 @@ interface User {
 }
 
 const PAGE_SIZE = 6;
-
-function formatRegistrationTimestamp(value: string | null): string {
-  if (!value) return "Unknown";
-
-  const timestamp = new Date(value);
-  if (Number.isNaN(timestamp.getTime())) return "Unknown";
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(timestamp);
-}
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -424,7 +413,7 @@ export default function UserManagement() {
                           className="font-bold text-slate-300"
                           dateTime={user.registeredAt ?? undefined}
                         >
-                          {formatRegistrationTimestamp(user.registeredAt)}
+                          {formatLocalDateTime(user.registeredAt)}
                         </time>
                       </div>
                     </td>

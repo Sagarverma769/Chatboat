@@ -15,22 +15,17 @@ async def submit_query(
     current_user = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    emp_code = (ticket_in.employee_code or "").strip()
-    emp_name = (ticket_in.employee_name or current_user.full_name or current_user.email.split("@", 1)[0]).strip()
-    title_val = ticket_in.title.strip() if ticket_in.title else (f"Emp: {emp_code}" if emp_code else "Chatbot Query")
-    dev_ip = ticket_in.device_ip if ticket_in.device_ip is not None else (emp_code or None)
-
     new_ticket = SupportTicket(
         user_id=str(getattr(current_user, "id", "")),
         user_email=current_user.email,
-        user_name=emp_name,
+        user_name=current_user.full_name or current_user.email.split("@", 1)[0],
         unit=ticket_in.unit or "General",
         location=ticket_in.location.strip(),
-        device_ip=dev_ip,
+        device_ip=ticket_in.device_ip,
         assigned_member=ticket_in.assigned_member or "IT Admin",
         category=ticket_in.category or "Chatbot",
         priority=ticket_in.priority or "Medium",
-        title=title_val,
+        title=ticket_in.title.strip() if ticket_in.title else "Chatbot Query",
         query=ticket_in.description.strip(),
         status="Pending",
     )

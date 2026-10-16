@@ -7,7 +7,6 @@ type BackendTicket = {
   location?: string | null;
   user_name?: string | null;
   user_email?: string | null;
-  device_ip?: string | null;
   assigned_member?: string | null;
   category?: string | null;
   priority?: string | null;
@@ -26,8 +25,6 @@ function mapTicket(ticket: BackendTicket) {
     location: ticket.location || "Not recorded",
     userName: ticket.user_name || ticket.user_email || "Unknown user",
     userEmail: ticket.user_email || "",
-    employeeCode: ticket.device_ip || ticket.title || "N/A",
-    deviceIp: ticket.device_ip || undefined,
     assignedMember: ticket.assigned_member || "IT Admin",
     category: ticket.category || "Chatbot",
     priority: ticket.priority || "Medium",
@@ -62,11 +59,8 @@ export async function POST(req: NextRequest) {
       assigned_member: data.assignedMember || "IT Admin",
       category: data.category || "Chatbot",
       priority: data.priority || "Medium",
-      title: data.employeeCode || data.title || "Chatbot Query",
+      title: "Chatbot Query",
       description: data.description,
-      device_ip: data.deviceIp || data.employeeCode || null,
-      employee_name: data.employeeName || data.userName || null,
-      employee_code: data.employeeCode || null,
     });
     if (!response.ok) return response;
     const ticket = await response.json() as BackendTicket;

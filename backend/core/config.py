@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     FIRST_SUPERUSER_EMAIL: Optional[str] = None
     FIRST_SUPERUSER_PASSWORD: Optional[str] = None
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM_EMAIL: Optional[str] = None
 
     # CORS configuration
     BACKEND_CORS_ORIGINS: List[str] = []

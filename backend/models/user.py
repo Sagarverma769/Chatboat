@@ -59,6 +59,18 @@ class User(Base):
         default=False,
         nullable=False,
     )
+    mfa_otp_hash: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        nullable=True,
+    )
+    mfa_otp_expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    mfa_otp_attempts: Mapped[int] = mapped_column(
+        default=0,
+        nullable=False,
+    )
 
     # Timestamps & Auditing
     created_at: Mapped[datetime] = mapped_column(

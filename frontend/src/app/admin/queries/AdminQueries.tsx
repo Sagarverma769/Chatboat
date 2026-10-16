@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { formatLocalDateTime } from "@/lib/date-time";
 import {
   Inbox,
   RotateCw,
@@ -10,6 +11,7 @@ import {
   Clock,
   AlertTriangle,
   MapPin,
+  Mail,
   Send,
   Trash2,
   Check,
@@ -23,8 +25,6 @@ export interface ITTicket {
   location: string;
   userName: string;
   userEmail: string;
-  employeeCode?: string;
-  deviceIp?: string;
   title: string;
   description: string;
   status: "Pending" | "In Progress" | "Remote Connected" | "Resolved";
@@ -137,8 +137,7 @@ export default function AdminQueries() {
   // Delete ticket so other admins don't get confused
   const confirmDeleteTicket = async () => {
     if (!ticketToDelete) return;
-    const { id, userName, employeeCode, deviceIp, title } = ticketToDelete;
-    const code = employeeCode || deviceIp || title || "N/A";
+    const { id, userName } = ticketToDelete;
     setDeletingId(id);
 
     try {
@@ -154,7 +153,7 @@ export default function AdminQueries() {
       }
 
       setTickets((prev) => prev.filter((t) => t.id !== id));
-      triggerToast(`Query for ${userName || "user"} (Code: ${code}) has been deleted.`);
+      triggerToast(`Query for ${userName || "user"} has been deleted.`);
       setTicketToDelete(null);
     } catch (error) {
       triggerToast(error instanceof Error ? error.message : "Failed to delete ticket.", true);
@@ -170,12 +169,10 @@ export default function AdminQueries() {
       (statusFilter === "Pending" && ticket.status !== "Resolved") ||
       (statusFilter === "Resolved" && ticket.status === "Resolved");
 
-    const empCode = ticket.employeeCode || ticket.deviceIp || ticket.title || "";
     const term = searchTerm.toLowerCase();
     const matchesSearch =
       !term ||
       ticket.userName.toLowerCase().includes(term) ||
-      empCode.toLowerCase().includes(term) ||
       ticket.location.toLowerCase().includes(term) ||
       ticket.description.toLowerCase().includes(term) ||
       ticket.userEmail.toLowerCase().includes(term);
@@ -241,8 +238,8 @@ export default function AdminQueries() {
               </div>
               <p id="admin-delete-query-description" className="mb-5 text-sm leading-relaxed text-slate-700">
                 Are you sure you want to delete this query for{" "}
-                <strong className="text-slate-900">{ticketToDelete.userName}</strong> (Code:{" "}
-                {ticketToDelete.employeeCode || ticketToDelete.deviceIp || "N/A"})?
+                <strong className="text-slate-900">{ticketToDelete.userName}</strong> (
+                {ticketToDelete.userEmail})?
               </p>
               <div className="flex justify-end gap-3">
                 <button
@@ -397,7 +394,6 @@ export default function AdminQueries() {
             {filteredTickets.map((ticket) => {
               const isResolved = ticket.status === "Resolved";
               const isReplying = activeReplyId === ticket.id;
-              const empCode = ticket.employeeCode || ticket.deviceIp || ticket.title || "N/A";
 
               return (
                 <div
@@ -418,15 +414,13 @@ export default function AdminQueries() {
                         <div>
                           <div className="text-xs font-black text-white flex items-center gap-2">
                             <span>{ticket.userName}</span>
-                            <span className="font-mono text-cyan-300 bg-cyan-950/90 border border-cyan-500/40 px-2 py-0.5 rounded text-[11px] font-bold">
-                              CODE: {empCode}
-                            </span>
                           </div>
-                          <div className="text-[11px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
+                          <div className="text-[11px] text-slate-400 font-bold flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                            <Mail className="w-3 h-3 text-slate-500" />
+                            <span>{ticket.userEmail}</span>
+                            <span className="text-slate-600">•</span>
                             <MapPin className="w-3 h-3 text-slate-500" />
                             <span>Location: {ticket.location}</span>
-                            <span className="text-slate-600">•</span>
-                            <span className="text-slate-500">{ticket.userEmail}</span>
                           </div>
                         </div>
                       </div>
@@ -585,7 +579,7 @@ export default function AdminQueries() {
 
                   {/* Submission Timestamp Footer */}
                   <div className="mt-2 text-[10px] text-slate-500 font-mono">
-                    Submitted: {new Date(ticket.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                    Submitted: {formatLocalDateTime(ticket.createdAt)}
                   </div>
                 </div>
               );

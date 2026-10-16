@@ -54,7 +54,25 @@ async def test_create_duplicate_user(async_client: AsyncClient, superuser, norma
     assert response.json()["detail"] == "The user with this email already exists in the system."
 
 @pytest.mark.asyncio
-async def test_registration_cannot_grant_admin_access(async_client: AsyncClient):
+async def test_registration_creates_user_only_after_email_otp(
+    async_client: AsyncClient,
+    db_session,
+    monkeypatch,
+):
+    from sqlalchemy.future import select
+    from models.pending_registration import PendingRegistration
+    from models.user import User
+
+    monkeypatch.setattr(settings, "FIRST_SUPERUSER_EMAIL", "sagarverma47097@gmail.com")
+    sent_codes = []
+
+    async def capture_registration_otp(recipient: str, otp: str):
+        sent_codes.append((recipient, otp))
+
+    monkeypatch.setattr(
+        "api.v1.endpoints.auth.send_registration_otp",
+        capture_registration_otp,
+    )
     response = await async_client.post(
         f"{settings.API_V1_STR}/auth/register",
         json={
@@ -63,8 +81,125 @@ async def test_registration_cannot_grant_admin_access(async_client: AsyncClient)
             "is_superuser": True,
         },
     )
-    assert response.status_code == 201
-    assert response.json()["is_superuser"] is False
+    assert response.status_code == 200
+    assert response.json()["mfa_required"] is True
+    assert sent_codes[0][0] == "self-promoting@example.com"
+    assert len(sent_codes[0][1]) == 6
+
+    user_result = await db_session.execute(
+        select(User).where(User.email == "self-promoting@example.com")
+    )
+    assert user_result.scalars().first() is None
+    pending_result = await db_session.execute(
+        select(PendingRegistration).where(
+            PendingRegistration.email == "self-promoting@example.com"
+        )
+    )
+    assert pending_result.scalars().first() is not None
+
+    verify_response = await async_client.post(
+        f"{settings.API_V1_STR}/auth/verify-registration-otp",
+        json={"email": "self-promoting@example.com", "otp": sent_codes[0][1]},
+    )
+    assert verify_response.status_code == 200
+    assert verify_response.json()["access_token"]
+    assert verify_response.json()["user"]["is_superuser"] is False
+
+    user_result = await db_session.execute(
+        select(User).where(User.email == "self-promoting@example.com")
+    )
+    created_user = user_result.scalars().first()
+    assert created_user is not None
+    assert created_user.is_verified is True
+    assert created_user.is_superuser is False
+
+    pending_result = await db_session.execute(
+        select(PendingRegistration).where(
+            PendingRegistration.email == "self-promoting@example.com"
+        )
+    )
+    assert pending_result.scalars().first() is None
+
+
+@pytest.mark.asyncio
+async def test_registration_with_wrong_otp_does_not_create_user(
+    async_client: AsyncClient,
+    db_session,
+    monkeypatch,
+):
+    from sqlalchemy.future import select
+    from models.user import User
+
+    sent_codes = []
+
+    async def capture_registration_otp(recipient: str, otp: str):
+        sent_codes.append(otp)
+
+    monkeypatch.setattr(
+        "api.v1.endpoints.auth.send_registration_otp",
+        capture_registration_otp,
+    )
+    await async_client.post(
+        f"{settings.API_V1_STR}/auth/register",
+        json={
+            "email": "unverified@example.com",
+            "password": "password123",
+            "full_name": "Unverified User",
+        },
+    )
+    response = await async_client.post(
+        f"{settings.API_V1_STR}/auth/verify-registration-otp",
+        json={
+            "email": "unverified@example.com",
+            "otp": "000000" if sent_codes[0] != "000000" else "000001",
+        },
+    )
+    assert response.status_code == 400
+
+    result = await db_session.execute(
+        select(User).where(User.email == "unverified@example.com")
+    )
+    assert result.scalars().first() is None
+
+
+@pytest.mark.asyncio
+async def test_configured_initial_admin_is_granted_admin_after_email_verification(
+    async_client: AsyncClient,
+    db_session,
+    monkeypatch,
+):
+    from sqlalchemy.future import select
+    from models.user import User
+
+    monkeypatch.setattr(settings, "FIRST_SUPERUSER_EMAIL", "owner@example.com")
+    sent_codes = []
+
+    async def capture_registration_otp(recipient: str, otp: str):
+        sent_codes.append(otp)
+
+    monkeypatch.setattr(
+        "api.v1.endpoints.auth.send_registration_otp",
+        capture_registration_otp,
+    )
+    await async_client.post(
+        f"{settings.API_V1_STR}/auth/register",
+        json={
+            "email": "owner@example.com",
+            "password": "password123",
+            "full_name": "Initial Admin",
+        },
+    )
+    response = await async_client.post(
+        f"{settings.API_V1_STR}/auth/verify-registration-otp",
+        json={"email": "owner@example.com", "otp": sent_codes[0]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["user"]["is_superuser"] is True
+    result = await db_session.execute(
+        select(User).where(User.email == "owner@example.com")
+    )
+    assert result.scalars().first().is_superuser is True
 
 @pytest.mark.asyncio
 async def test_allowlisted_email_without_database_role_is_not_admin(

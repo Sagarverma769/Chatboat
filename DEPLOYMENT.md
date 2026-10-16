@@ -73,6 +73,14 @@ The backend must be able to reach PostgreSQL. Configure `backend\.env` with:
 - `DATABASE_URL` with the managed PostgreSQL connection URL
 - `SECRET_KEY` with a generated, private signing secret
 - `FIRST_SUPERUSER_EMAIL` and `FIRST_SUPERUSER_PASSWORD` for the first administrator
+- `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, and the sender Gmail in `SMTP_USERNAME` and `SMTP_FROM_EMAIL`
+- `SMTP_PASSWORD` with that sender account's Google App Password (not its regular Google password)
+
+The SMTP sender can be a personal Gmail account even when PostgreSQL is hosted under a different company account. These credentials are independent. Keep them only in `backend\.env`, which must not be committed.
+
+Set `FIRST_SUPERUSER_EMAIL` to the one owner email that receives initial admin access after proving mailbox ownership with the signup or login OTP. New signups with any other email are regular users; an existing admin can grant/revoke admin access in the user-management page. A migration removes the old hardcoded email-based admin grants.
+
+Sign-up sends an email verification code before creating a user account. The password is stored as a hash in a temporary pending-registration record; the user account is only created after the correct code is verified, and verification completes the initial login. Normal-user logins require a fresh email OTP; admin logins do not. After deploying these changes, run `python -m alembic upgrade head` from `backend` to add the OTP, pending-registration, and admin-role fields before restarting the API.
 
 Do not commit `.env` files or use the repository's local SQLite database in production. Ensure the Windows Firewall allows browser traffic to the frontend port (default `3000`); keep backend port `8000` private when the frontend's Next.js server proxies API requests.
 
