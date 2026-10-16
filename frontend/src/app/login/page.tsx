@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
+import { clearAuthSession, setAuthSessionValue } from '@/lib/auth-session';
 
 type LoginResponse = {
   mfa_required?: boolean;
@@ -56,10 +57,11 @@ export default function LoginPage() {
       return;
     }
 
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('userEmail', cleanEmail);
-    localStorage.setItem('userRole', activeTab === 'admin' ? 'admin' : userRole);
-    localStorage.setItem('userName', userName);
+    clearAuthSession();
+    setAuthSessionValue('access_token', data.access_token);
+    setAuthSessionValue('userEmail', cleanEmail);
+    setAuthSessionValue('userRole', activeTab === 'admin' ? 'admin' : userRole);
+    setAuthSessionValue('userName', userName);
 
     if (activeTab === 'admin') {
       setSuccessMsg('Admin Authentication Successful! Redirecting...');

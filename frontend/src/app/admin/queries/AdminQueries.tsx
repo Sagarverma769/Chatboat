@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { formatLocalDateTime } from "@/lib/date-time";
+import { getAuthSessionValue } from "@/lib/auth-session";
 import {
   Inbox,
   RotateCw,
@@ -51,7 +52,7 @@ export default function AdminQueries() {
   const fetchTickets = async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       const response = await fetch("/api/tickets?admin=true", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         cache: "no-store",
@@ -104,7 +105,7 @@ export default function AdminQueries() {
 
     setUpdatingId(ticket.id);
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       const response = await fetch("/api/tickets", {
         method: "PATCH",
         headers: {
@@ -141,7 +142,7 @@ export default function AdminQueries() {
     setDeletingId(id);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       const response = await fetch(`/api/tickets?id=${encodeURIComponent(id)}&admin=true`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},

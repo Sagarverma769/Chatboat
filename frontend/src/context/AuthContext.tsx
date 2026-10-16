@@ -3,6 +3,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import {
+  clearAuthSession,
+  getAuthSessionValue,
+  setAuthSessionValue,
+} from '@/lib/auth-session';
 
 export interface User {
   id: string;
@@ -29,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const logout = useCallback(() => {
-    localStorage.removeItem('access_token');
+    clearAuthSession();
     setToken(null);
     setUser(null);
     router.push('/login');
@@ -48,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => {
-      const storedToken = localStorage.getItem('access_token');
+      const storedToken = getAuthSessionValue('access_token');
       if (storedToken) {
         setToken(storedToken);
         void fetchCurrentUser();
@@ -61,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchCurrentUser]);
 
   const login = async (newToken: string) => {
-    localStorage.setItem('access_token', newToken);
+    setAuthSessionValue('access_token', newToken);
     setToken(newToken);
     await fetchCurrentUser();
     router.push('/dashboard');

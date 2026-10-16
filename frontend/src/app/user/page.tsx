@@ -6,6 +6,11 @@ import { ShieldCheck, ShieldAlert, Lock, Shield, Zap, Calendar } from "lucide-re
 import BrandLogo from "@/components/BrandLogo";
 import FloatingChat from "@/components/FloatingChat";
 import UserSupportDesk from "./components/UserSupportDesk";
+import {
+  clearAuthSession,
+  getAuthSessionValue,
+  setAuthSessionValue,
+} from "@/lib/auth-session";
 
 export default function UserPortalPage() {
   const router = useRouter();
@@ -21,7 +26,7 @@ export default function UserPortalPage() {
   useEffect(() => {
     let active = true;
     const verifyUserSession = async () => {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       if (!token) {
         if (active) {
           setIsAuthorized(true);
@@ -37,7 +42,7 @@ export default function UserPortalPage() {
         });
         const user = await response.json();
         if (!response.ok) {
-          localStorage.removeItem("access_token");
+          clearAuthSession();
           if (active) setIsAuthorized(false);
           router.replace("/login");
           return;
@@ -46,8 +51,8 @@ export default function UserPortalPage() {
         if (active) {
           const verifiedEmail = user.email || "";
           const verifiedName = user.full_name || verifiedEmail.split("@")[0];
-          localStorage.setItem("userEmail", verifiedEmail);
-          localStorage.setItem("userName", verifiedName);
+          setAuthSessionValue("userEmail", verifiedEmail);
+          setAuthSessionValue("userName", verifiedName);
           setUserEmail(verifiedEmail);
           setUserName(verifiedName);
           setIsEmailVerified(Boolean(user.is_verified));
@@ -55,7 +60,7 @@ export default function UserPortalPage() {
           setIsAuthorized(true);
         }
       } catch {
-        localStorage.removeItem("access_token");
+        clearAuthSession();
         if (active) setIsAuthorized(false);
         router.replace("/login");
       }
@@ -80,10 +85,7 @@ export default function UserPortalPage() {
   }, [router]);
 
   const handleSignOut = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userRole");
+    clearAuthSession();
     router.push("/login");
   };
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { formatLocalDateTime } from "@/lib/date-time";
+import { getAuthSessionValue } from "@/lib/auth-session";
 import { 
   Users, 
   Search, 
@@ -48,10 +49,10 @@ export default function UserManagement() {
   const fetchUsers = async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       const currentEmail = (
         typeof window !== "undefined"
-          ? (localStorage.getItem("userEmail") || localStorage.getItem("email") || "")
+          ? (getAuthSessionValue("userEmail") || "")
           : ""
       ).toLowerCase();
       const response = await fetch("/api/users", {
@@ -109,7 +110,7 @@ export default function UserManagement() {
     setUpdatingId(id);
     const newStatus = !currentStatus;
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       const response = await fetch("/api/users", {
         method: "PATCH",
         headers: {
@@ -145,7 +146,7 @@ export default function UserManagement() {
     if (!userToDelete) return;
     const targetEmail = userToDelete.email;
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       const response = await fetch(`/api/users?id=${encodeURIComponent(userToDelete.id)}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},

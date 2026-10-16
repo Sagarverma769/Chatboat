@@ -10,6 +10,11 @@ import {
   Inbox,
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
+import {
+  clearAuthSession,
+  getAuthSessionValue,
+  setAuthSessionValue,
+} from "@/lib/auth-session";
 
 // Correct Imports as per your folder structure
 import DashboardOverview from "./dashboard-overview/DashboardOverview";
@@ -32,7 +37,7 @@ export default function AdminPortalPage() {
   useEffect(() => {
     let active = true;
     const verifyAdminSession = async () => {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       if (!token) {
         router.replace("/login");
         return;
@@ -45,7 +50,7 @@ export default function AdminPortalPage() {
         });
         const user = await response.json();
         if (!response.ok || !user.is_superuser) {
-          localStorage.removeItem("access_token");
+          clearAuthSession();
           if (active) setIsAuthorized(false);
           router.replace(response.ok ? "/user" : "/login");
           return;
@@ -54,14 +59,14 @@ export default function AdminPortalPage() {
         if (active) {
           const verifiedEmail = user.email || "";
           const verifiedName = user.full_name || verifiedEmail.split("@")[0];
-          localStorage.setItem("userEmail", verifiedEmail);
-          localStorage.setItem("userName", verifiedName);
+          setAuthSessionValue("userEmail", verifiedEmail);
+          setAuthSessionValue("userName", verifiedName);
           setUserEmail(verifiedEmail);
           setUserName(verifiedName);
           setIsAuthorized(true);
         }
       } catch {
-        localStorage.removeItem("access_token");
+        clearAuthSession();
         if (active) setIsAuthorized(false);
         router.replace("/login");
       }
@@ -91,7 +96,7 @@ export default function AdminPortalPage() {
     if (!isAuthorized) return;
     const fetchPendingCount = async () => {
       try {
-        const token = localStorage.getItem("access_token");
+        const token = getAuthSessionValue("access_token");
         if (!token) return;
         const res = await fetch("/api/tickets?admin=true", {
           headers: { Authorization: `Bearer ${token}` },
@@ -110,10 +115,7 @@ export default function AdminPortalPage() {
   }, [isAuthorized]);
 
   const handleSignOut = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userRole");
+    clearAuthSession();
     router.push("/login");
   };
 

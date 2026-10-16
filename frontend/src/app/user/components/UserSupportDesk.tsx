@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { formatLocalDateTime } from "@/lib/date-time";
+import { getAuthSessionValue } from "@/lib/auth-session";
 import {
   Send,
   CheckCircle2,
@@ -53,7 +54,7 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
   const getActiveEmail = () => {
     if (userEmail && userEmail.trim()) return userEmail.trim().toLowerCase();
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("userEmail") || localStorage.getItem("email") || "";
+      const stored = getAuthSessionValue("userEmail") || "";
       if (stored.trim()) return stored.trim().toLowerCase();
     }
     return "user@indsphinx.com";
@@ -61,7 +62,7 @@ export default function UserSupportDesk({ userName, userEmail }: UserSupportDesk
 
   const getAuthHeaders = (): Record<string, string> => {
     if (typeof window === "undefined") return {};
-    const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+    const token = getAuthSessionValue("access_token");
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 

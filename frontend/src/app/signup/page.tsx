@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
+import { clearAuthSession, setAuthSessionValue } from '@/lib/auth-session';
 
 function getRegistrationError(data: unknown): string {
   if (typeof data !== 'object' || data === null) {
@@ -166,10 +167,11 @@ export default function SignUpPage() {
         access_token: string;
         user?: { email?: string; name?: string; role?: string };
       };
-      localStorage.setItem('access_token', result.access_token);
-      localStorage.setItem('userEmail', result.user?.email || email.trim().toLowerCase());
-      localStorage.setItem('userRole', result.user?.role || 'user');
-      localStorage.setItem('userName', result.user?.name || fullName.trim());
+      clearAuthSession();
+      setAuthSessionValue('access_token', result.access_token);
+      setAuthSessionValue('userEmail', result.user?.email || email.trim().toLowerCase());
+      setAuthSessionValue('userRole', result.user?.role || 'user');
+      setAuthSessionValue('userName', result.user?.name || fullName.trim());
       setSuccessMsg('Email verified and account created. Redirecting...');
       setTimeout(() => {
         window.location.assign(new URL('/user', window.location.origin));

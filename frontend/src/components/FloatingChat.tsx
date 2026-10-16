@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { getAuthSessionValue } from "@/lib/auth-session";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -338,7 +339,7 @@ export default function FloatingChat({
   const fetchChatResponse = async (userQuery: string): Promise<string> => {
     const headers = new Headers({ "Content-Type": "application/json" });
     if (role === "admin") {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
       if (token) headers.set("Authorization", `Bearer ${token}`);
     }
 

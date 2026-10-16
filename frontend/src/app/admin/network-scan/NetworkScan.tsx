@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { getAuthSessionValue } from "@/lib/auth-session";
 import {
   Terminal,
   RefreshCw,
@@ -114,7 +115,7 @@ export default function NetworkScan({ onScanStateChange }: NetworkScanProps = {}
     ]);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthSessionValue("access_token");
 
       const detailedScan = serviceVersion || osDetection || defaultScripts || scanType === "-A" || scanType === "-sU";
       const timeoutMs = portSelection === "all" ? 300000 : detailedScan ? 90000 : 30000;
